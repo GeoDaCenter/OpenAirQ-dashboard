@@ -33,12 +33,6 @@ county.pm25<- full.data%>%
   filter(COUNTY %in% counties$COUNTYNAME)%>%
   mutate(Date = as.Date(Date, format = "%m/%d/%Y"))%>%
   filter(Date>= '2020-12-01')
-
-county.pm25<- county.pm25%>%
-  group_by(`Site ID`)%>%
-  summarise(`PM 2.5 emissions` = mean(`Daily Mean PM2.5 Concentration`),
-            "SITE_LONGITUDE" = mean(SITE_LONGITUDE),
-            "SITE_LATITUDE" = mean(SITE_LATITUDE))
   
 
 ## Create a spatial object for sites 
@@ -212,32 +206,6 @@ theme_air_chicago <- shinyDashboardThemeDIY(
 ##### THEME END #####
 
 ###Function ###
-### Create Tab Page for PM2.5 with one-time  Data
-generateOnetimeTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                              mapheight = 500) 
-{
-  tabItem(tabName = tabname,
-          fluidRow(
-            box(width = 4,
-                tabsetPanel(
-                  tabPanel(title = "Description",
-                           h3(variablename),
-                           p(variabledescription)),
-                  tabPanel(title = "Source",
-                           h4("Data Source"),
-                           p(sourcedescription))))
-          ),
-          box(width = 8,
-              sliderInput("Date", 
-                          label = "Select Date:",
-                          min = min("Date"), 
-                          max = max("Date")),
-              value = c(min("Date"),max("Date")),
-              step = as.difftime(1, units = "days"),
-              animate = animationOptions(interval = 2000),
-              leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight)
-          ))
-}
 
 
 ui <- dashboardPage(
@@ -280,7 +248,7 @@ ui <- dashboardPage(
                                        inline = TRUE)),
                 box(width = 8,
                     selectizeInput("homevar", "Select Variables for Comparison:",
-                                     "PM2.5" = "PM25"),
+                                     c("PM2.5" = "PM25")),
                                    options = list(maxItems = 7)),
                     plotlyOutput("homeplot", height = 445),
                     actionButton("clearshapes", "Clear Selection")))
@@ -313,38 +281,42 @@ ui <- dashboardPage(
                 ))
       ),
       ##### ABOUT END #####
-      tabItem(tabName = "pm2",
+      tabItem(tabName = "pm25",
               fluidRow(
                 box(width = 4,
                     tabsetPanel(
                       tabPanel(title = "Description",
-                               h3(variablename),
-                               p(variabledescription)),
+                               h3(pm25.name),
+                               p(pm25.source)),
                       tabPanel(title = "Source",
                                h4("Data Source"),
-                               p(sourcedescription))))
+                               p(pm25.description))))
               ),
               box(width = 8,
                   sliderInput("Date", 
-                              label = "Select Date:",
-                              min = min("Date"), 
-                              max = max("Date")),
-                  value = c(min("Date"),max("Date")),
-                  step = as.difftime(1, units = "days"),
+                              min = strptime("2020/12/01","%Y/%m/%d"), 
+                              max = strptime("2021/01/24","%Y/%m/%d"),
+                              value = strptime("2021/01/01","%Y/%m/%d"),
+                              timeFormat = "%Y/%m/%d",
+                              step = as.difftime(1, units = "days"),
                   animate = animationOptions(interval = 2000),
-                  leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight)
-              )),
-      generateOnetimeTab(pm25.tabname, pm25.name, pm25.description, pm25.source)
+                  leafletOutput("pm25_map",height = mapheight)
+              ))
+      )
   )
 )
+
+
+mypalette <- colorBin( palette="YlOrBr", domain=quakes$mag, na.color="transparent")
 
 server <- function(input, output) {
   
   
   ##### HOME START #####
   
- 
-  
+ data_input<- reactive({county.pm25$`Daily Mean PM2.5 Concentration`})
+ labels_input<- reactive({county.pm25$Date})
+
   output$homemap <- renderLeaflet({
     leaflet(counties) %>%
       addProviderTiles(provider = "OpenStreetMap.HOT") %>%
@@ -364,18 +336,15 @@ server <- function(input, output) {
   ##### HOME END #####
   
   output$pm25_map <- renderLeaflet({
-    
-    this.pm25.name <- "PM25_3_16"
-    
-    in.pal <- "ovr"
-    
-    pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
-    
-    dashMap(this.pm25.name, pm25.pal, 
-            raster = master.raster, area = large.area, 
-            layerId = large.area$FIPS, EPApoints = epa.points, 
-            VarName = "PM25")
-    
+    leaflet(counties) %>%
+      addProviderTiles(provider = "OpenStreetMap.HOT") %>%
+      setView(lat = "41.97736", lng = "-87.62255", zoom = 7) %>% 
+      addCircleMarkers(county.pm25$SITE_LONGITUDE,county.pm25$SITE_LATITUDE, 
+                         fillColor = mypalette(data_input), fillOpacity = 0.7, color="white", radius=8, stroke=FALSE,
+                         label = labels_input,
+                         labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+        )
+
   })
 }
 
