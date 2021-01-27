@@ -13,9 +13,10 @@ library(raster)
 library(scales)
 library(aqsr)
 
-### Create Tab Page for PM2.5 with One Time Data
-generateOneTimeTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                               mapviewselected = "lac", mapheight = 500) {
+### Create Tab Page for PM2.5 with one-time  Data
+generateWeeklyTab <- function(tabname, variablename, variabledescription, sourcedescription,
+                                 mapheight = 500) 
+{
   tabItem(tabName = tabname,
           fluidRow(
             box(width = 4,
@@ -25,38 +26,18 @@ generateOneTimeTab <- function(tabname, variablename, variabledescription, sourc
                            p(variabledescription)),
                   tabPanel(title = "Source",
                            h4("Data Source"),
-                           p(sourcedescription))
-                ),
-                radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
-                                  "Set View", 
-                                  c("21 Counties" = "lac", 
-                                    "Chicago" = "chi"),
-                                  selected = mapviewselected)
+                           p(sourcedescription))))
             ),
             box(width = 8,
-                leafletOutput(paste(tabname, "map", sep = "_"), height = mapheight)
-                
-            )
+                sliderInput("Date", 
+                            label = "Select Date:",
+                            min = min("Date"), 
+                            max = max("Date")),
+                            value = c(min("Date"),max("Date")),
+                            step = as.difftime(1, units = "days"),
+                            animate = animationOptions(interval = 2000),
+                leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight)
           ))
-}
-
-##### Date Slider Output to Raster Layer Name
-getLayerName <- function(in.date, variable, period = "qtr") {
-  
-  in.date <- as.Date(in.date)
-  
-  var.month <- month(in.date)
-  var.yr <- year(in.date)
-  
-  var.qtr <- ceiling(var.month/3)
-  
-  var.yr <- substring(var.yr, 3, 4) 
-  if(period == "qtr") {
-    this.var.name <- paste(variable, var.qtr, var.yr, sep = "_")
-  }
-  else if (period == "mon") {
-    this.var.name <- paste(variable, var.month, var.yr, sep = "_")
-  }
 }
 
 ##### Generate Leaflet Map 
@@ -269,5 +250,7 @@ palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow",
   pal <- colorNumeric(colors, breaks, na.color = nacolor) 
   
 }
+
+
 
 
