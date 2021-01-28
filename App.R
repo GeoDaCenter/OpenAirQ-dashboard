@@ -14,6 +14,7 @@ library(scales)
 library(aqsr)
 library(tmap)
 library(tidyverse)
+library(zoo)
 
 ##### Data Wrangling #####
 
@@ -32,8 +33,18 @@ full.data <- map_df(pm2.5, import_pm)
 county.pm25<- full.data%>%
   filter(COUNTY %in% counties$COUNTYNAME)%>%
   mutate(Date = as.Date(Date, format = "%m/%d/%Y"))%>%
-  filter(Date>= '2020-12-01')
-  
+  select(Date, `Site ID`,`Daily Mean PM2.5 Concentration`, COUNTY,SITE_LATITUDE, SITE_LONGITUDE )%>%
+  group_by(Date, `Site ID`,COUNTY )%>%
+  summarise(pm2.5 = mean(`Daily Mean PM2.5 Concentration`),
+            latitude = mean(SITE_LATITUDE), 
+            longitude = mean(SITE_LONGITUDE) )%>%
+  pivot_wider(names_from = Date, values_from = "pm2.5")
+
+
+a<- na.approx(county.pm25, rule = 2)
+
+
+a<- reshape(county.pm25, timevar = "Date",idvar = 'Site ID', direction = 'wide')  
 
 ## Create a spatial object for sites 
 
