@@ -292,7 +292,25 @@ palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow",
 
 }
 
-
+### Converts column to HTML labels; maps NA values to their date of last update
+getLabels <- function(date, dataframe, varname) {
+  col.format <- paste(varname, "%Y%m%d", sep = "_")
+  idx <- which(colnames(dataframe) == format(date, col.format))
+  col <- dataframe[, idx]
+  labels <- sprintf(as.character(round(col, 3)))
+  na.idx <- which(is.na(col))
+  search <- dataframe[na.idx, idx:ncol(dataframe)] # slice of dataframe to search for last update
+  # week is shifted back here, to be consistent with the dataproc
+  # note: max.col doesn't work if there is no last update available; this does not happen currently
+  update <- strptime(names(search)[max.col(!is.na(search), "first")], col.format) - days(6) 
+  update[update == date - days(6)] <- NA # if update == today, no last update exists
+  repl <- paste("NA<br>Last Updated:", # Create HTML strings for last updates
+                update, 
+                sep = " ") 
+  labels[na.idx] <- repl
+  labels <- paste(dataframe$name, "<br>", labels, sep = "")
+  labels %>% lapply(htmltools::HTML)
+}
 
 
 
