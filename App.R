@@ -41,20 +41,20 @@ chi.boundary<- st_union(chi.admin.map)
 
 #Covid data (temp?)
 pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
-pm25.means<- data.frame(PM25=apply(na.omit(pm25[, 7:ncol(pm25)]), 2, mean)) # may be worth doing externally
-week.idx<- seq(from=nrow(pm25.means) - 5, to=1, by=-7)
-pm25.trace<- pm25.means$PM25[week.idx] # may be worth doing externally
+pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
+week.idx<- read.csv("Data/Week_Index.csv")$x
+pm25.trace<- read.csv("Data/PM25_Weekly/pm25_trace.csv")$x
 aqi<- read.csv("Data/PM25_Weekly/aqi.csv")
-aqi.means<- data.frame(AQI=apply(na.omit(aqi[, 7:ncol(aqi)]), 2, mean)) # may be worth doing externally
-aqi.trace<- aqi.means$AQI[week.idx] # may be worth doing externally
-covid.raw<- read.csv("Data/CovidWeekly.csv")
-covid.means<- data.frame(COVID=apply(na.omit(covid.raw[, ncol(covid.raw):(3)]), 2, mean)) # may be worth doing externally
-covid.trace<- as.numeric(covid.means$COVID)
-asthma.raw<- read.csv("Data/Asthma2017.csv")
+aqi.means<- read.csv("Data/PM25_Weekly/aqi_means.csv")
+aqi.trace<- read.csv("Data/PM25_Weekly/aqi_trace.csv")$x
+covid.raw<- read.csv("Data/COVID/CovidWeekly.csv")
+covid.means<- read.csv("Data/COVID/covid_means.csv", row.names=1)
+covid.trace<- read.csv("Data/COVID/covid_trace.csv")$x
+asthma.raw<- read.csv("Data/COVID/Asthma2017.csv")
 asthma.raw$zip<- as.character(asthma.raw$zip)
 
-covid<- left_join(chi.admin.map, covid.raw, by = ("zip"))
-asthma<- left_join(chi.admin.map, asthma.raw, by = ("zip"))
+covid<- st_read("Data/COVID/covid.geojson")
+asthma<- st_read("Data/COVID/asthma.geojson")
 trees.all <- st_read("Data/Tract")
 trees.var <- c("geoid", "svi_pecent", "trees_crow", "logtraf",
                "urban_floo", "heatisl","nn_q3_pm2_", "asthma_5yr")
