@@ -64,8 +64,10 @@ cdph.permits <- st_read("Data/CDPH_Permits")
 
 
 #NN Data Loading
-nn.raster <- stack("Data/NN_Results.tif")
-nn.names <- read.csv("Data/NN_Raster_Names.csv")
+# nn.raster <- stack("Data/NN_Results.tif")
+# nn.names <- read.csv("Data/NN_Raster_Names.csv")
+nn.raster <- stack("Data/NN/nn_21_base.grd")
+nn.names <- read.csv("Data/NN_Raster_Names_New.csv")
 
 names(nn.raster) <- nn.names$nn_names
 
@@ -1535,9 +1537,15 @@ server <- function(input, output) {
       
       this.nn.name <- getLayerName(in.date, "NN", period = "mon")
       
-      ## Stopgap fix to not crash app; model missing Jan/Feb 2014 and 2015
-      if(this.nn.name == "NN_1_15" || this.nn.name == "NN_2_15") {
+      ## Stopgap missing model fixes extended
+      if(this.nn.name == "NN_2_15") {
         this.nn.name <- "NN_3_15"
+      }
+      if(this.nn.name == "NN_1_16" || this.nn.name == "NN_2_16") {
+        this.nn.name <- "NN_3_16"
+      }
+      if(this.nn.name == "NN_1_17") {
+        this.nn.name <- "NN_2_17"
       }
       
       in.pal <- input$nn_rad
