@@ -1124,7 +1124,7 @@ server <- function(input, output) {
     else if (input$covid_map_left_choropleth == "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette, 
                        values = trees$nn_q3_pm2_,
-                       title = "PM2.5", opacity = 1)
+                       title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_left_choropleth == "svi") {
       map <- addLegend(map, "bottomleft", pal = svipalette, 
@@ -1136,7 +1136,7 @@ server <- function(input, output) {
         input$covid_map_left_choropleth != "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette, 
                        values = pm25[, which(colnames(pm25) == format(input$covid_dt + days(6), "PM25_%Y%m%d"))],
-                       title = "PM2.5", opacity = 1)
+                       title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_left_sensor == "aqi") {
       map <- addLegend(map, "bottomleft", pal = aqipalette, 
@@ -1324,7 +1324,7 @@ server <- function(input, output) {
     else if (input$covid_map_right_choropleth == "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette, 
                        values = trees$nn_q3_pm2_,
-                       title = "PM2.5", opacity = 1)
+                       title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_right_choropleth == "svi") {
       map <- addLegend(map, "bottomleft", pal = svipalette, 
@@ -1336,7 +1336,7 @@ server <- function(input, output) {
         input$covid_map_right_choropleth != "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette, 
                        values = pm25[, which(colnames(pm25) == format(input$covid_dt + days(6), "PM25_%Y%m%d"))],
-                       title = "PM2.5", opacity = 1)
+                       title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_right_sensor == "aqi") {
       map <- addLegend(map, "bottomleft", pal = aqipalette, 
@@ -1451,8 +1451,8 @@ server <- function(input, output) {
                 mode = "lines",
                 opacity = 1,
                 line = list(dash = "solid", color = reds[1]),
-                name = paste("Average", "PM2.5 / sensor", sep = " "),
-                text = paste("Average", "PM2.5 / sensor", sep = " "))
+                name = paste("Average", "PM2.5 / sensor", "(ug/m3)", sep = " "),
+                text = paste("Average", "PM2.5 / sensor", "(ug/m3)", sep = " "))
     
     if (length(all.fips$fips) > 0) {
       for (i in 1:length(all.fips$fips)) {
@@ -1493,10 +1493,10 @@ server <- function(input, output) {
                     line = list(dash = "dot", color = reds[(i %% length(reds)) + 1]),
                     name = paste("PM2.5 at", 
                                  pm25$name[which(grepl(all.sensors$sensors[i], pm25$Site.ID))], 
-                                 "sensor", sep = " "),
+                                 "sensor", "(ug/m3)", sep = " "),
                     text = paste("PM2.5 at", 
                                  pm25$name[which(grepl(all.sensors$sensors[i], pm25$Site.ID))], 
-                                 "sensor", sep = " "))
+                                 "sensor", "(ug/m3)", sep = " "))
       }
     }
     
