@@ -1878,7 +1878,8 @@ server <- function(input, output) {
     dashMap(this.pm25.name, pm25.pal, 
             raster = master.raster, area = large.area, 
             layerId = large.area$FIPS, EPApoints = epa.points, 
-            VarName = "PM25")
+            VarName = "PM25", 
+            units = "(ug/m3)")
     
     
     
@@ -1894,7 +1895,7 @@ server <- function(input, output) {
 
     pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
 
-    sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = master.raster)
+    sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = master.raster, units = "(ug/m3)")
     }
   })
   
@@ -1935,7 +1936,8 @@ server <- function(input, output) {
 
     dashMap(this.pm10.name, pm10.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "PM10")
+            EPApoints = epa.points, VarName = "PM10", 
+            units = "(ug/m3)")
 
   })
 
@@ -1948,7 +1950,7 @@ server <- function(input, output) {
 
     pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = master.raster)
 
-    sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = master.raster)
+    sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = master.raster, units = "(ug/m3)")
     }
   })
   
@@ -2424,7 +2426,7 @@ server <- function(input, output) {
 
     dashMap(this.temp.name, temp.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "Temp")
+            EPApoints = epa.points, VarName = "Temp", units = "(F)")
   })
 
   observe({
@@ -2436,7 +2438,7 @@ server <- function(input, output) {
 
       temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = master.raster)
 
-      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster)
+      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster, units = "(F)")
     }
   })
   

@@ -83,12 +83,12 @@ getLayerName <- function(in.date, variable, period = "qtr") {
 
 ##### Generate Leaflet Map 
 dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 0.8,
-                    EPApoints = NULL, VarName = NULL) {
+                    EPApoints = NULL, VarName = NULL, units = "") {
   
     dMap <- leaflet(layername) %>%
     addProviderTiles("OpenStreetMap.HOT") %>%
     addRasterImage(raster[[layername]], opacity = rasterOpacity, colors = layerpal) %>%
-    leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = gsub("_.*","",layername)) %>%
+    leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = paste(gsub("_.*","",layername), units)) %>%
     addPolygons(data = area, 
                 color = "darkslategray",
                 fillOpacity  = 0.00, 
@@ -113,12 +113,12 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
 
 ##### For use in observe function with slider
 
-sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.8) {
+sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.8, units = "") {
   leafletProxy(mapname) %>%
     clearControls() %>%
     clearImages() %>%
     addRasterImage(raster[[layername]], opacity = rasterOpacity, colors = layerpal) %>%
-    leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = gsub("_.*","",layername))
+    leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = paste(gsub("_.*","",layername), units))
 }
 
 
