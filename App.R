@@ -39,7 +39,6 @@ chi.map <- st_read("Data/Chicago")
 chi.admin.map<- st_read("Data/ZipcodeBoundary")
 chi.boundary<- st_union(chi.admin.map)
 
-####### This section needs to be moved outside of the app in weekly scraping ##
 #Covid data (temp?)
 pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
 pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
@@ -479,40 +478,45 @@ ui <- dashboardPage(
 
     tabItems(
 
-    ##### HOME START #####
+    ##### HOME START ####
+    
     tabItem(tabName = "home",
-      fluidRow(
-        box(width = 12,
-            img(src='header.png', width = '100%', align = "right")
-      )),
-      fluidRow(
-        box(width = 4,
-            helpText("Select one or multiple counties for comparison of regional trends."),
-            leafletOutput("homemap", height = mapheight),
-            checkboxGroupInput("homecheck", label = "", c("Show Mean" = "mean",
-                                                          "Rescale Data" = "rescale"),
-                               selected = c("mean"),
-                               width = '100%',
-                               inline = TRUE)),
-        box(width = 8,
-             selectizeInput("homevar", "Select Variables for Comparison:",
-                           c("Aerosol Optical Depth" = "AOD",
-                             "Normalized Difference Vegetation Index" = "NDVI",
-                             "Bidirectional Reflectance Factor" = "BRF",
-                             "PM2.5" = "PM25",
-                             "PM10" = "PM10",
-                             "Carbon Monoxide" = "CO",
-                             "Nitrogen Dioxide" = "NO2",
-                             "Ozone" = "Ozone",
-                             "Sulfur Dioxide" = "SO2",
-                             "Lead" = "Lead",
-                             "Temperature" = "Temp",
-                             "Barometric Pressure" = "Pressure"),
-                           options = list(maxItems = 7)),
-            plotlyOutput("homeplot", height = 445),
-            actionButton("clearshapes", "Clear Selection")))
-    ),
+            
+            fluidRow(
+              box(width = 12,
+                  img(src='header.png', width = '100%', align = "right")
+              )),
+    
+            fluidRow(
+              box(width = 4,
+                  helpText("Select one or multiple counties for comparison of regional trends."),
+                  leafletOutput("homemap", height = mapheight),
+                  checkboxGroupInput("homecheck", label = "", c("Show Mean" = "mean",
+                                                                "Rescale Data" = "rescale"),
+                                     selected = c("mean"),
+                                     width = '100%',
+                                     inline = TRUE)),
+              box(width = 8,
+                  selectizeInput("homevar", "Select Variables for Comparison:",
+                                 c("Aerosol Optical Depth" = "AOD",
+                                   "Normalized Difference Vegetation Index" = "NDVI",
+                                   "Bidirectional Reflectance Factor" = "BRF",
+                                   "PM2.5" = "PM25",
+                                   "PM10" = "PM10",
+                                   "Carbon Monoxide" = "CO",
+                                   "Nitrogen Dioxide" = "NO2",
+                                   "Ozone" = "Ozone",
+                                   "Sulfur Dioxide" = "SO2",
+                                   "Lead" = "Lead",
+                                   "Temperature" = "Temp",
+                                   "Barometric Pressure" = "Pressure"),
+                                 options = list(maxItems = 7)),
+                  plotlyOutput("homeplot", height = 445),
+                  actionButton("clearshapes", "Clear Selection")))
+            ),
+
     ##### HOME END #####
+    
     ##### ABOUT START #####
     tabItem(tabName = "about",
             fluidRow(
