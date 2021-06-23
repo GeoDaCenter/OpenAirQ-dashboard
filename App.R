@@ -77,7 +77,7 @@ names(nn.raster) <- nn.names$nn_names
 
 ##### VARIABLE START #####
 
-mapheight = 500
+mapheight = "60vh"
 
 start_date<- strptime(names(covid)[ncol(covid) - 1], "COVID_Week_%Y%m%d")
 end_date<- strptime(names(covid)[6], "COVID_Week_%Y%m%d")
@@ -423,6 +423,7 @@ theme_air_chicago <- shinyDashboardThemeDIY(
 ##### THEME END #####
 
 ui <- dashboardPage(
+  title = "Open Air Chicago",
 
   ##### LOGO START #####
   dashboardHeader(title = shinyDashboardLogoDIY(boldText = "Open Air",
@@ -437,17 +438,19 @@ ui <- dashboardPage(
   ##### LOGO END #####
 
   dashboardSidebar(sidebarMenu(id = "sidebar",
-    menuItem("Home", tabName = "home", icon = icon("home")),
-    menuItem("About", tabName = "about", icon = icon("info")),
-    menuItem("COVID", tabName = "covid", icon = icon("medkit")),
+    menuItem("Home", tabName = "home", icon = icon("home"),
+             menuSubItem("Region Explorer", tabName = "home", icon = icon("map-marked-alt")),
+             menuSubItem("Health Explorer", tabName = "covid", icon = icon("medkit")),
+             menuSubItem("Tree Equity Tool", href = "https://rhabus.carto.com/builder/50d25399-d7c7-4cf1-9e17-0ef44c7d7315/embed_protected?", icon = icon("tree")),
+             menuSubItem("About", tabName = "about", icon = icon("info"))),
     menuItem("EPA Sensor Data", icon = icon("envira"),
              menuSubItem("PM2.5", tabName = "pm25"),
              menuSubItem("PM10", tabName = "pm10"),
-             menuSubItem("Carbon Monoxide", tabName = "co"),
-             menuSubItem("Nitrogen Dioxide", tabName = "no2"),
-             menuSubItem("Ozone", tabName = "o3"),
-             menuSubItem("Sulfur Dioxide", tabName = "so2"),
-             menuSubItem("Lead", tabName = "pb")),
+             menuSubItem("Carbon Monoxide", tabName = "coXX"),
+             menuSubItem("Nitrogen Dioxide", tabName = "no2XX"),
+             menuSubItem("Ozone", tabName = "o3XX"),
+             menuSubItem("Sulfur Dioxide", tabName = "so2XX"),
+             menuSubItem("Lead", tabName = "pbXX")),
     menuItem("Meteorological Data", icon = icon("thermometer-half"),
              menuSubItem("Temperature", tabName = "temp"),
              menuSubItem("Pressure", tabName = "pressure"),
@@ -480,7 +483,7 @@ ui <- dashboardPage(
     tabItem(tabName = "home",
       fluidRow(
         box(width = 12,
-            h1("Chicago Air Quality Explorer", align = "center")
+            img(src='header.png', width = '100%', align = "right")
       )),
       fluidRow(
         box(width = 4,
@@ -520,7 +523,17 @@ ui <- dashboardPage(
             fluidRow(
               box(width = 6,
                 h1("Overview", align = "center", style = "color: #80ceff"),
-                p("Open Air Chicago is an interactive dashboard providing information on air quality for the greater Chicagoland area including Milwaukee. It includes direct measures of air quality as well as variables known to affect or relate to these variables. Each of the 16 examined variables has an individual page with a variable description, source information, and interactive visualization. Additionally, the “Home” tab offers the option to explore broader trends within the data for a single variable or among several variables both at the broader Chicagoland scale and the individual county level. All data used to generate the graphs and maps on the dashboard are available for access on the “Downloads” tab.")
+                p("Open Air Chicago is an interactive dashboard providing 
+                  information on air quality for the greater Chicagoland area 
+                  including Milwaukee. It includes direct measures of air quality 
+                  as well as variables known to affect or relate to these variables. 
+                  Each of the variables has an individual page with a 
+                  variable description, source information, and interactive visualization. 
+                  Additionally, the \"Home\" tab offers the option to explore broader trends 
+                  within the data for a single variable or among several variables both at 
+                  the broader Chicagoland scale and the individual county level. All data 
+                  used to generate the graphs and maps on the dashboard are available for 
+                  access on the \"Downloads\" tab.")
                 ),
               box(width = 6,
                 h1("Objectives", align = "center", style = "color: #c71414"),

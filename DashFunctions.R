@@ -2,7 +2,7 @@
 
 ### Create Tab Page for Variables with Quarterly Data
 generateQuarterlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                                  mapheight = 500) 
+                                  mapheight = "70vh") 
   {
   tabItem(tabName = tabname,
           fluidRow(
@@ -37,7 +37,7 @@ generateQuarterlyTab <- function(tabname, variablename, variabledescription, sou
 
 ### Create Tab Page for Variables with One Time Data
 generateOneTimeTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                               mapviewselected = "lac", mapheight = 500) {
+                               mapviewselected = "lac", mapheight = "70vh") {
   tabItem(tabName = tabname,
           fluidRow(
             box(width = 4,
