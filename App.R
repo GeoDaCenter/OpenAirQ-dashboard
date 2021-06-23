@@ -58,7 +58,8 @@ asthma<- st_read("Data/COVID/asthma.geojson")
 
 trees.all <- st_read("Data/Tract")
 trees.var <- c("geoid", "svi_pecent", "trees_crow", "logtraf",
-               "urban_floo", "heatisl","nn_q3_pm2_", "asthma_5yr")
+               "urban_floo", "heatisl","nn_q3_pm2_", "asthma_5yr",
+               "hardship")
 trees <- trees.all[,trees.var]
 
 cdph.permits <- st_read("Data/CDPH_Permits")
@@ -110,6 +111,12 @@ asthmapalette <- colorBin(palette="YlOrRd" , bins=asthma.bins, na.color="transpa
 svi.bins <- classIntervals(na.omit(trees$svi_pecent), 5, style="fisher")$brks # 5 natural bins
 svipalette <- colorBin(palette="YlOrRd" , bins=svi.bins, na.color="transparent") # discrete
 # svipalette <- colorBin(palette="YlOrRd" , domain = na.omit(trees$svi_pecent), na.color="transparent") # continuous
+
+# hard.bins <- classIntervals(na.omit(trees$hardship), 5, style="quantile")$brks # 5 quantile bins
+hard.bins <- classIntervals(na.omit(trees$hardship), 5, style="fisher")$brks # 5 natural bins
+hardpalette <- colorBin(palette="YlOrRd" , bins=hard.bins, na.color="transparent") # discrete
+# hardpalette <- colorBin(palette="YlOrRd" , domain = na.omit(trees$hardship), na.color="transparent") # continuous
+
 
 ##### COLOR BREAKS END #####
 
@@ -430,19 +437,17 @@ ui <- dashboardPage(
   ##### LOGO END #####
 
   dashboardSidebar(sidebarMenu(id = "sidebar",
-    menuItem("Home", tabName = "home", icon = icon("home"),
-      menuSubItem("Region Explorer", tabName = "home", icon = icon("map-marked-alt")),
-      menuSubItem("Health Explorer", tabName = "covid", icon = icon("medkit")),
-      menuSubItem("Tree Equity Tool", href = "https://rhabus.carto.com/builder/50d25399-d7c7-4cf1-9e17-0ef44c7d7315/embed_protected?", icon = icon("tree")),
-      menuSubItem("About", tabName = "about", icon = icon("info"))),
+    menuItem("Home", tabName = "home", icon = icon("home")),
+    menuItem("About", tabName = "about", icon = icon("info")),
+    menuItem("COVID", tabName = "covid", icon = icon("medkit")),
     menuItem("EPA Sensor Data", icon = icon("envira"),
              menuSubItem("PM2.5", tabName = "pm25"),
              menuSubItem("PM10", tabName = "pm10"),
-             menuSubItem("Carbon Monoxide", tabName = "coXX"),
-             menuSubItem("Nitrogen Dioxide", tabName = "no2XX"),
-             menuSubItem("Ozone", tabName = "o3XX"),
-             menuSubItem("Sulfur Dioxide", tabName = "so2XX"),
-             menuSubItem("Lead", tabName = "pbXX")),
+             menuSubItem("Carbon Monoxide", tabName = "co"),
+             menuSubItem("Nitrogen Dioxide", tabName = "no2"),
+             menuSubItem("Ozone", tabName = "o3"),
+             menuSubItem("Sulfur Dioxide", tabName = "so2"),
+             menuSubItem("Lead", tabName = "pb")),
     menuItem("Meteorological Data", icon = icon("thermometer-half"),
              menuSubItem("Temperature", tabName = "temp"),
              menuSubItem("Pressure", tabName = "pressure"),
@@ -475,7 +480,7 @@ ui <- dashboardPage(
     tabItem(tabName = "home",
       fluidRow(
         box(width = 12,
-            img(src='header.png', width = '100%', align = "right")
+            h1("Chicago Air Quality Explorer", align = "center")
       )),
       fluidRow(
         box(width = 4,
@@ -515,17 +520,7 @@ ui <- dashboardPage(
             fluidRow(
               box(width = 6,
                 h1("Overview", align = "center", style = "color: #80ceff"),
-                p("Open Air Chicago is an interactive dashboard providing 
-                  information on air quality for the greater Chicagoland area 
-                  including Milwaukee. It includes direct measures of air quality 
-                  as well as variables known to affect or relate to these variables. 
-                  Each of the variables has an individual page with a 
-                  variable description, source information, and interactive visualization. 
-                  Additionally, the “Home” tab offers the option to explore broader trends 
-                  within the data for a single variable or among several variables both at 
-                  the broader Chicagoland scale and the individual county level. All data 
-                  used to generate the graphs and maps on the dashboard are available for 
-                  access on the “Downloads” tab.")
+                p("Open Air Chicago is an interactive dashboard providing information on air quality for the greater Chicagoland area including Milwaukee. It includes direct measures of air quality as well as variables known to affect or relate to these variables. Each of the 16 examined variables has an individual page with a variable description, source information, and interactive visualization. Additionally, the “Home” tab offers the option to explore broader trends within the data for a single variable or among several variables both at the broader Chicagoland scale and the individual county level. All data used to generate the graphs and maps on the dashboard are available for access on the “Downloads” tab.")
                 ),
               box(width = 6,
                 h1("Objectives", align = "center", style = "color: #c71414"),
@@ -723,6 +718,13 @@ ui <- dashboardPage(
                 )),
     ##### PRECIPITATION END #####
     
+    ##### VULNERABILITY START #####
+    
+    generateOneTimeTab("svi", "Social Vulnerability Index", "", ""),
+    
+    generateOneTimeTab("hardind", "Economic Hardship Index", "", ""),
+    
+    ##### VULNERABILITY END #####
     
     ##### DOWNLOADS START #####
     
@@ -2548,6 +2550,104 @@ server <- function(input, output) {
   #
 
   ##### PRECIPITATION END #####
+  
+  output$svi_map <- renderLeaflet({
+    leaflet() %>%
+      addProviderTiles("OpenStreetMap.HOT")%>%
+      list()%>% # these 3 lines fit the map to the bbox of large.area
+      c(chi.bounds)%>%
+      { exec(fitBounds, !!!.) }%>%
+      addPolygons(data = large.area, 
+                  color = "darkslategray",
+                  fillOpacity  = 0.00, 
+                  stroke = TRUE,
+                  opacity = 1,
+                  layerId = large.area$FIPS,
+                  weight = 1,
+                  highlight = highlightOptions(
+                    weight = 2, 
+                    color = "gray", 
+                    fillOpacity = 0.05))%>%
+      addPolygons(data = chi.boundary, 
+                  color = "darkslategray",
+                  fillOpacity  = 0.00, 
+                  stroke = TRUE,
+                  opacity = 1,
+                  layerId = "Chicago",
+                  weight = 2,
+                  highlight = highlightOptions(
+                    weight = 2, 
+                    color = "gray", 
+                    fillOpacity = 0.05))%>%
+      addPolygons(data = trees,
+                  fillColor = svipalette(trees$svi_pecent),
+                  fillOpacity  = 0.7,
+                  color = "white",
+                  stroke = FALSE,
+                  weight = 2,
+                  opacity = 1,
+                  dashArray = "3",
+                  layerId = trees$geoid,
+                  label = trees$geoid,
+                  labelOptions = labelOptions(
+                    style = list("font-weight" = "normal",
+                                 padding = "3px 8px"),
+                    textsize = "15px",
+                    direction = "auto"))%>%
+      addLegend("bottomleft", pal = svipalette, 
+                values = trees$svi_pecent,
+                title = "SVI Percentile", opacity = 1)
+    
+  })
+  
+  output$hardind_map <- renderLeaflet({
+    leaflet() %>%
+      addProviderTiles("OpenStreetMap.HOT")%>%
+      list()%>% # these 3 lines fit the map to the bbox of large.area
+      c(chi.bounds)%>%
+      { exec(fitBounds, !!!.) }%>%
+      addPolygons(data = large.area, 
+                  color = "darkslategray",
+                  fillOpacity  = 0.00, 
+                  stroke = TRUE,
+                  opacity = 1,
+                  layerId = large.area$FIPS,
+                  weight = 1,
+                  highlight = highlightOptions(
+                    weight = 2, 
+                    color = "gray", 
+                    fillOpacity = 0.05))%>%
+      addPolygons(data = chi.boundary, 
+                  color = "darkslategray",
+                  fillOpacity  = 0.00, 
+                  stroke = TRUE,
+                  opacity = 1,
+                  layerId = "Chicago",
+                  weight = 2,
+                  highlight = highlightOptions(
+                    weight = 2, 
+                    color = "gray", 
+                    fillOpacity = 0.05))%>%
+      addPolygons(data = trees,
+                  fillColor = hardpalette(trees$hardship),
+                  fillOpacity  = 0.7,
+                  color = "white",
+                  stroke = FALSE,
+                  weight = 2,
+                  opacity = 1,
+                  dashArray = "3",
+                  layerId = trees$geoid,
+                  label = trees$geoid,
+                  labelOptions = labelOptions(
+                    style = list("font-weight" = "normal",
+                                 padding = "3px 8px"),
+                    textsize = "15px",
+                    direction = "auto"))%>%
+      addLegend("bottomleft", pal = hardpalette, 
+                values = trees$hardship,
+                title = "Economic Hardship Index", opacity = 1)
+    
+  })
   
   ##### DOWNLOADS START #####
   
