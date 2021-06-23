@@ -521,7 +521,7 @@ ui <- dashboardPage(
     tabItem(tabName = "about",
             fluidRow(
               box(width = 12,
-                  h1("About", align = "center"),
+                  h2("About", align = "center"),
                   textOutput("abouttext")
               )),
             fluidRow(
@@ -540,16 +540,16 @@ ui <- dashboardPage(
                   access on the \"Downloads\" tab.")
                 ),
               box(width = 6,
-                h1("Objectives", align = "center", style = "color: #c71414"),
+                h2("Objectives", align = "center", style = "color: #c71414"),
                 p("The primary goal of this dashboard is to provide both researchers and the public at large with clean, free, and easily accessible data for all things air quality. While all data used in the dashboard is technically available for free online, the numerous formats, sources, and options provide for an unwelcoming landscape. By streamlining the process through which the data is accessed, the hope is to enable more people to spend more time actually analyzing the data and working to improve air quality. Additionally, Open Air Chicago hopes to do this by offering data visualization options to explore individual variable data as well as relationships between variables over time.")
             )),
             fluidRow(
               box(width = 6,
-                h1("Data", align = "center", style = "color: #c71414"),
+                h2("Data", align = "center", style = "color: #c71414"),
                 p("All data used to create the dashboard is available online free of charge. Sources include the Environmental Protection Agency (EPA), National Aeronautics and Space Administration (NASA),  National Oceanic and Atmospheric Association (NOAA), United States Geological Survey (USGS), and OpenStreetMap. Specific sourcing information is available on individual dashboard pages. County-level aggregates for all variables are available for download at a monthly and quarterly temporal resolution as CSV files on the “Downloads” tab. Also available on the “Downloads” tab is a GeoTiff raster file containing all of the 1km resolution gridded data.")
               ),
               box(width = 6,
-                  h1("Methodology", align = "center",  style = "color: #80ceff"),
+                  h2("Methodology", align = "center",  style = "color: #80ceff"),
                   p("In addition to differing in source and format, the raw data also exists at a variety of spatial and temporal resolutions. All data was aggregated to a standard, 1km resolution grid at both monthly and quarterly intervals. For the EPA sensor data, the gridded values were extracted from an Inverse Distance Weighted interpolation of sensor averages. Interpolated values for variables with fewer sensors will be less accurate than those with more sensors. Due to data availability, particularly with NASA’s remote-sensed Aerosol Optical Depth, individual variable pages provide visualizations of the quarterly aggregates to maximize coverage. For data not originally provided at a 1km resolution, unless otherwise noted on the “Source” tab on each variable page, the value assigned to each 1km cell is the mean of all measured values within it.")
             ))
     ),
