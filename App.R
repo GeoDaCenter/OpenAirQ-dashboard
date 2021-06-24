@@ -683,7 +683,7 @@ ui <- dashboardPage(
 
     generateOneTimeTab(elevation.tabname, elevation.name, elevation.description, elevation.source),
 
-    generateMonthlyTab(pm25.tabname, pm25.name, pm25.description, pm25.source),
+    generateMonthlyTab(pm25.tabname, pm25.name, pm25.description, pm25.source, radselect = "mon"),
 
     generateQuarterlyTab(pm10.tabname, pm10.name, pm10.description, pm10.source),
 
@@ -1906,7 +1906,7 @@ server <- function(input, output) {
     
     this.pm25.name <- "7-2016"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     this.pm25.data
     this.pm25.data <- pm25.sensors %>%
@@ -2358,6 +2358,9 @@ pm25.map
     pe.pal <- palFromLayer("PECount", colors = c("darkgreen", "yellow2", "darkorange", "darkred"), raster = master.raster)
     
     pe.map <- leaflet("PECount") %>%
+      setView(lng = -87.660456,
+              lat = 41.845027,
+              zoom = 10) %>%
       addMapPane("polygons", zIndex = 410) %>%
       addMapPane("points", zIndex = 420) %>% 
       addProviderTiles("OpenStreetMap.HOT") %>%
@@ -2368,6 +2371,8 @@ pm25.map
                   layerId = chi.map$area_numbe,
                   weight = 1,
                   fillOpacity = 0.01) %>%
+      addRasterImage(master.raster[["PECount"]], opacity = 0.4, colors = pe.pal) %>%
+      leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources") %>%
       addCircleMarkers(data = cdph.permits,
                        color = "black",
                        radius = 0.75,
@@ -2406,7 +2411,7 @@ pm25.map
     if(input$sidebar == "pe") {
       
       
-      
+      pe.pal <- palFromLayer("PECount", colors = c("darkgreen", "yellow2", "darkorange", "darkred"), raster = master.raster)
       
       
       if(input$pe_chi_zoom == "chi") {
@@ -2429,6 +2434,8 @@ pm25.map
                     layerId = chi.map$area_numbe,
                     weight = 1,
                     fillOpacity = 0.01) %>%
+        addRasterImage(master.raster[["PECount"]], opacity = 0.4, colors = pe.pal) %>%
+        leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "Point Emission Sources") %>%
         addCircleMarkers(data = cdph.permits,
                          color = "black",
                          radius = 0.75,
@@ -2457,7 +2464,7 @@ pm25.map
         pe.proxy %>%
           flyTo(lat = "41.97736", lng = "-87.62255", zoom = 7) %>% 
           addRasterImage(master.raster[["PECount"]], opacity = 0.7, colors = pe.pal) %>%
-          leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "Point Emission Sources") %>%
+          leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources") %>%
           addPolygons(data = large.area, 
                       color = "darkslategray",
                       fillOpacity  = 0.01, 

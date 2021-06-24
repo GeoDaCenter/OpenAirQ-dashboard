@@ -1,6 +1,6 @@
 ### Create Tab Page for Variables with Quarterly Data
 generateMonthlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                                 mapheight = "70vh") 
+                                 radselect = "ovr", mapheight = "70vh") 
 {
   tabItem(tabName = tabname,
           fluidRow(
@@ -28,7 +28,7 @@ generateMonthlyTab <- function(tabname, variablename, variabledescription, sourc
                 leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight),
                 radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
                                   c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                  selected = "ovr"))
+                                  selected = radselect))
           ))
 }
 
