@@ -1,4 +1,36 @@
-
+### Create Tab Page for Variables with Quarterly Data
+generateMonthlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
+                                 mapheight = "70vh") 
+{
+  tabItem(tabName = tabname,
+          fluidRow(
+            box(width = 4,
+                tabsetPanel(
+                  tabPanel(title = "Description",
+                           h3(variablename),
+                           p(variabledescription)),
+                  tabPanel(title = "Source",
+                           h4("Data Source"),
+                           p(sourcedescription))),
+                radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
+                                  "Set View", 
+                                  c("21 Counties" = "lac", 
+                                    "Chicago" = "chi"))
+            ),
+            box(width = 8,
+                sliderInput(paste(tabname, "dt", sep = "_"), "Select month:",
+                            min = strptime("2014/03/01","%Y/%m/%d"), 
+                            max = strptime("2018/12/31","%Y/%m/%d"),
+                            value = strptime("2016/07/01","%Y/%m/%d"),
+                            timeFormat = "%Y/%m",
+                            step = as.difftime(30, units = "days"),
+                            animate = animationOptions(interval = 2000)),
+                leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight),
+                radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
+                                  c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
+                                  selected = "ovr"))
+          ))
+}
 
 ### Create Tab Page for Variables with Quarterly Data
 generateQuarterlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
@@ -80,6 +112,7 @@ getLayerName <- function(in.date, variable, period = "qtr") {
     this.var.name <- paste(variable, var.month, var.yr, sep = "_")
   }
 }
+
 
 ##### Generate Leaflet Map 
 dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 0.8,
@@ -291,6 +324,41 @@ palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow",
   pal <- colorNumeric(colors, breaks, na.color = nacolor) 
 
 }
+
+#Create palettes from PM2.5 layer --> easy to modify to make layername an argument
+palFromVectorLayer <- function(filtereddata, completedata, style = "ovr", 
+                               colors = c("green", "yellow", "orange", "red"), 
+                               nacolor = "transparent") {
+  if(style == "qtr" || style == "mon") {
+    
+    max <- max(filtereddata$avg_pm25)
+    min <- min(filtereddata$avg_pm25)
+    
+  } else if (style == "ovr") {
+    
+    max <- max(completedata$avg_pm25)
+    min <- min(completedata$avg_pm25)
+    
+  } else if (style == "yr") {
+    
+    this.yr <- substring(stringr::str_extract(test, "-(.*)"), first = 2, last = 5)
+    
+    
+    yr.data <- completedata[grep(this.yr, completedata$moyr),]
+    
+    max <- max(yr.data$avg_pm25)
+    min <- min(yr.data$avg_pm25)
+  }
+
+  inc <- (max - min) / 10 
+  
+  breaks <- seq(from = min, to = max, inc)
+
+  pal <- colorNumeric(colors, breaks, na.color = nacolor) 
+
+}
+
+
 
 ### Converts column to HTML labels; maps NA values to their date of last update
 getLabels <- function(date, dataframe, varname) {

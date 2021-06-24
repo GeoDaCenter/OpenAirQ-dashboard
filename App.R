@@ -34,6 +34,10 @@ var.avgs <- colMeans(county.avgs[,4:ncol(county.avgs)], na.rm = T)
 
 epa.points <- st_read("Data/EPA_Points")
 
+#Test PM2.5 setup for 5/25/21 meeting
+pm25.sensors <- read_csv("Data/PM25_Sensors_Monthly.csv")
+
+
 chi.map <- st_read("Data/Chicago")
 #chi.map <- sf::st_transform(chi.map, CRS('+proj=longlat +datum=WGS84'))
 chi.admin.map<- st_read("Data/ZipcodeBoundary")
@@ -679,7 +683,7 @@ ui <- dashboardPage(
 
     generateOneTimeTab(elevation.tabname, elevation.name, elevation.description, elevation.source),
 
-    generateQuarterlyTab(pm25.tabname, pm25.name, pm25.description, pm25.source),
+    generateMonthlyTab(pm25.tabname, pm25.name, pm25.description, pm25.source),
 
     generateQuarterlyTab(pm10.tabname, pm10.name, pm10.description, pm10.source),
 
@@ -1897,20 +1901,52 @@ server <- function(input, output) {
     }
   })
   
-
+###### ISAAC SEARCH ####
   output$pm25_map <- renderLeaflet({
-
-    this.pm25.name <- "PM25_3_16"
+    
+    this.pm25.name <- "7-2016"
 
     in.pal <- "ovr"
 
-    pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
+    this.pm25.data
+    this.pm25.data <- pm25.sensors %>%
+      dplyr::filter(moyr == this.pm25.name)
 
-    dashMap(this.pm25.name, pm25.pal, 
-            raster = master.raster, area = large.area, 
-            layerId = large.area$FIPS, EPApoints = epa.points, 
-            VarName = "PM25", 
-            units = "(ug/m3)")
+    pm25.pal <- palFromVectorLayer(filtereddata = this.pm25.data,
+                                   completedata = pm25.sensors,
+                                   style = in.pal)
+    
+    pm25.map <- leaflet(pm25.sensors) %>%
+      addProviderTiles("OpenStreetMap.HOT") %>%
+      addPolygons(data = large.area, 
+                  color = "darkslategray",
+                  fillOpacity  = 0.00, 
+                  stroke = TRUE,
+                  opacity = 1,
+                  layerId = large.area$FIPS,
+                  weight = 1,
+                  highlight = highlightOptions(
+                    weight = 2, 
+                    color = "gray", 
+                    fillOpacity = 0.05)) %>%
+      addCircleMarkers(lng = this.pm25.data$Longitude,
+                 lat = this.pm25.data$Latitude,
+                 color = pm25.pal(this.pm25.data$avg_pm25),
+                 layerId = this.pm25.data$`Site Num`,
+                 radius = 3,
+                 opacity = 0.9,
+                 label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " "))
+pm25.map
+    # pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
+    # print(paste("main", this.pm25.name))
+    #Tweaking dashmap() function to work for this 
+    ##### Generate Leaflet Map 
+    
+    # dashMap(this.pm25.name, pm25.pal, 
+    #         raster = master.raster, area = large.area, 
+    #         layerId = large.area$FIPS, EPApoints = epa.points, 
+    #         VarName = "PM25", 
+    #         units = "(ug/m3)")
     
     
     
@@ -1920,42 +1956,65 @@ server <- function(input, output) {
   observe({
     if (input$sidebar == "pm25") {
     in.date <- input$pm25_dt
-    this.pm25.name <- getLayerName(in.date, "PM25")
 
+    
+    #convert slider to date format used by the pm2.5 dataset
+    pm25.slider.name <- paste(month(in.date), year(in.date), sep = "-")
+    old.pm25.data <- this.pm25.data
+    this.pm25.data <- pm25.sensors %>%
+      dplyr::filter(moyr == pm25.slider.name)
+    
     in.pal <- input$pm25_rad
-
-    pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
-
-    sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = master.raster, units = "(ug/m3)")
+    pm25.pal <- palFromVectorLayer(filtereddata = this.pm25.data,
+                                   completedata = pm25.sensors,
+                                   style = in.pal)
+    
+    leafletProxy("pm25_map") %>%
+      leaflet::removeMarker(layerId = old.pm25.data$`Site Num`) %>%
+      addCircleMarkers(lng = this.pm25.data$Longitude,
+                       lat = this.pm25.data$Latitude, 
+                       color = pm25.pal(this.pm25.data$avg_pm25),
+                       layerId = this.pm25.data$`Site Num`,
+                       radius = 3,
+                       opacity = 0.9, 
+                       label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " "))
+    
+    # this.pm25.name <- getLayerName(in.date, "PM25")
+    # 
+    # 
+    # 
+    
+    # 
+    # sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = master.raster, units = "(ug/m3)")
     }
   })
   
   observeEvent(input$pm25_map_shape_click, {
     if(input$sidebar == "pm25") { #Optimize Dashboard speed by not observing outside of tab
       if(input$pm25_chi_zoom == "lac") {
-        
+
         click <- input$pm25_map_shape_click
-        
+
         zoomMap("pm25_map", click, large.area)
       }
       else if (input$pm25_chi_zoom == "chi") {
         click <- input$pm25_map_shape_click
-        
+
         zoomChiMap("pm25_map", click, chi.map)
       }
     }
   })
-  
-  observeEvent(input$pm25_chi_zoom, {
-    if(input$sidebar == "pm25") {
-      if(input$pm25_chi_zoom == "chi") {
-        chiView("pm25_map", chi.map, EPApoints = epa.points, VarName = "PM25") 
-      }
-      else if (input$pm25_chi_zoom == "lac") {
-        lacView("pm25_map", large.area, EPApoints = epa.points, VarName = "PM25")
-      }
-    }
-  })
+
+  # observeEvent(input$pm25_chi_zoom, {
+  #   if(input$sidebar == "pm25") {
+  #     if(input$pm25_chi_zoom == "chi") {
+  #       chiView("pm25_map", chi.map, EPApoints = epa.points, VarName = "PM25") 
+  #     }
+  #     else if (input$pm25_chi_zoom == "lac") {
+  #       lacView("pm25_map", large.area, EPApoints = epa.points, VarName = "PM25")
+  #     }
+  #   }
+  # })
 
   output$pm10_map <- renderLeaflet({
 
