@@ -1908,7 +1908,7 @@ server <- function(input, output) {
 
     in.pal <- "mon"
 
-    this.pm25.data
+    
     this.pm25.data <- pm25.sensors %>%
       dplyr::filter(moyr == this.pm25.name)
 
@@ -1964,7 +1964,7 @@ pm25.map
     
     #convert slider to date format used by the pm2.5 dataset
     pm25.slider.name <- paste(month(in.date), year(in.date), sep = "-")
-    old.pm25.data <- this.pm25.data
+    # old.pm25.data <- this.pm25.data ###ERROR Source
     this.pm25.data <- pm25.sensors %>%
       dplyr::filter(moyr == pm25.slider.name)
     
@@ -1974,7 +1974,7 @@ pm25.map
                                    style = in.pal)
     
     leafletProxy("pm25_map") %>%
-      leaflet::removeMarker(layerId = old.pm25.data$`Site Num`) %>%
+      leaflet::clearMarkers() %>%
       leaflet::clearControls() %>%
       addCircleMarkers(lng = this.pm25.data$Longitude,
                        lat = this.pm25.data$Latitude, 

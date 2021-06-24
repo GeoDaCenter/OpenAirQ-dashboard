@@ -341,7 +341,7 @@ palFromVectorLayer <- function(filtereddata, completedata, style = "ovr",
     
   } else if (style == "yr") {
     
-    this.yr <- substring(stringr::str_extract(test, "-(.*)"), first = 2, last = 5)
+    this.yr <- substring(stringr::str_extract(filtereddata$moyr[1], "-(.*)"), first = 2, last = 5)
     
     
     yr.data <- completedata[grep(this.yr, completedata$moyr),]
