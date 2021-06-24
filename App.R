@@ -1935,7 +1935,11 @@ server <- function(input, output) {
                  layerId = this.pm25.data$`Site Num`,
                  radius = 3,
                  opacity = 0.9,
-                 label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " "))
+                 label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " ")) %>%
+      leaflet::addLegend(pal = pm25.pal, 
+                         values = this.pm25.data$avg_pm25,
+                         title = "PM2.5 Concentration (ug/m3)",
+                         labFormat = labelFormat(suffix = " ug/m3"))
 pm25.map
     # pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
     # print(paste("main", this.pm25.name))
@@ -1971,13 +1975,18 @@ pm25.map
     
     leafletProxy("pm25_map") %>%
       leaflet::removeMarker(layerId = old.pm25.data$`Site Num`) %>%
+      leaflet::clearControls() %>%
       addCircleMarkers(lng = this.pm25.data$Longitude,
                        lat = this.pm25.data$Latitude, 
                        color = pm25.pal(this.pm25.data$avg_pm25),
                        layerId = this.pm25.data$`Site Num`,
                        radius = 3,
                        opacity = 0.9, 
-                       label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " "))
+                       label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " ")) %>%
+      leaflet::addLegend(pal = pm25.pal, 
+                         values = this.pm25.data$avg_pm25,
+                         title = "PM2.5 Concentration",
+                         labFormat = labelFormat(suffix = " ug/m3"))
     
     # this.pm25.name <- getLayerName(in.date, "PM25")
     # 
@@ -2005,16 +2014,16 @@ pm25.map
     }
   })
 
-  # observeEvent(input$pm25_chi_zoom, {
-  #   if(input$sidebar == "pm25") {
-  #     if(input$pm25_chi_zoom == "chi") {
-  #       chiView("pm25_map", chi.map, EPApoints = epa.points, VarName = "PM25") 
-  #     }
-  #     else if (input$pm25_chi_zoom == "lac") {
-  #       lacView("pm25_map", large.area, EPApoints = epa.points, VarName = "PM25")
-  #     }
-  #   }
-  # })
+  observeEvent(input$pm25_chi_zoom, {
+    if(input$sidebar == "pm25") {
+      if(input$pm25_chi_zoom == "chi") {
+        chiView("pm25_map", chi.map)
+      }
+      else if (input$pm25_chi_zoom == "lac") {
+        lacView("pm25_map", large.area)
+      }
+    }
+  })
 
   output$pm10_map <- renderLeaflet({
 
