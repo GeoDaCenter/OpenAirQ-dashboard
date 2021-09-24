@@ -18,7 +18,7 @@ library(scales)
 ##### DATA LOADING START #####
 source("DashFunctions.R")
 
-master.raster <- stack("Data/Master_Raster.tif")
+master.raster <- stack("Data/Master_Raster.grd")
 raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
 names(master.raster) <- raster.names$x
@@ -36,6 +36,7 @@ epa.points <- st_read("Data/EPA_Points")
 
 #Test PM2.5 setup for 5/25/21 meeting
 pm25.sensors <- read_csv("Data/PM25_Sensors_Monthly.csv")
+epa.sensors <- st_read("Data/EPA_Quarterly.geojson")
 
 
 chi.map <- st_read("Data/Chicago")
