@@ -19,9 +19,9 @@ library(scales)
 source("DashFunctions.R")
 
 master.raster <- stack("Data/Master_Raster.grd")
-raster.names <- read.csv("Data/Master_Raster_Names.csv")
+# raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
-names(master.raster) <- raster.names$x
+# names(master.raster) <- raster.names$x
 large.area <- st_read("Data/LargeAreaCounties")
 large.area$COUNTYNAME <- as.character(large.area$COUNTYNAME)
 
