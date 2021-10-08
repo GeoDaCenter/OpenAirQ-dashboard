@@ -5,7 +5,7 @@ CDPH_Permits - point emissions sources; [here](https://geodacenter.github.io/Ope
 
 Chicago - city of chicago shapes
 
-**COVID** - [Chicago Data Portal covid cases](https://data.cityofchicago.org/Health-Human-Services/COVID-19-Cases-Tests-and-Deaths-by-ZIP-Code/yhhz-zm2v), aggregated weekly (uses Automatic_Weekly_Data_Generation.R; RSocrata API)
+**COVID** - [Chicago Data Portal covid cases](https://data.cityofchicago.org/Health-Human-Services/COVID-19-Cases-Tests-and-Deaths-by-ZIP-Code/yhhz-zm2v), aggregated weekly (uses Automatic_Weekly_Data_Generation.R [from OpenAirq-phase2/data_wrangling]; RSocrata API)
 
 EPA_Points - outdated; all utilized EPA sensors grouped by pollutant (EPA historical)
 
