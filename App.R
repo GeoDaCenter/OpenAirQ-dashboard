@@ -1876,7 +1876,7 @@ server <- function(input, output) {
 
     elev.pal <- palFromLayer("Elev", raster = master.raster)
 
-    elevation.map <- dashMap("Elev", elev.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS)
+    elevation.map <- dashMap("Elev", elev.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS, units = "(m)")
 
   })
   
@@ -2591,7 +2591,7 @@ pm25.map
     
     dashMap(this.pressure.name, pressure.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "Pressure")
+            EPApoints = epa.points, VarName = "Pressure", units = "(mbar)")
   })
   
   observe({
@@ -2603,7 +2603,7 @@ pm25.map
       
       pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = master.raster)
       
-      sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = master.raster)
+      sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = master.raster, units = "(mbar)")
     }
   })
   
