@@ -478,6 +478,12 @@ ui <- dashboardPage(
   ),
 
   dashboardBody(
+    
+    tags$style(type = "text/css", "html, body {width:100%;height:100%}",
+               ".leaflet .legend-circles i{
+      border-radius: 50%;
+      }
+    "),
 
     theme_air_chicago,
 
@@ -1171,11 +1177,13 @@ server <- function(input, output) {
     if (input$covid_map_left_sensor == "pm25" &&
         input$covid_map_left_choropleth != "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette, 
+                       className = "info legend legend-circles",
                        values = pm25[, which(colnames(pm25) == format(input$covid_dt + days(6), "PM25_%Y%m%d"))],
                        title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_left_sensor == "aqi") {
-      map <- addLegend(map, "bottomleft", pal = aqipalette, 
+      map <- addLegend(map, "bottomleft", pal = aqipalette,
+                       className = "info legend legend-circles",
                        values = aqi[, which(colnames(aqi) == format(input$covid_dt + days(6), "AQI_%Y%m%d"))],
                        labFormat = function(type, cuts, p) {
                          paste0(aqi.legend.labels)
@@ -1370,12 +1378,14 @@ server <- function(input, output) {
     # add sensor legend
     if (input$covid_map_right_sensor == "pm25" &&
         input$covid_map_right_choropleth != "pm25") {
-      map <- addLegend(map, "bottomleft", pal = pm25palette, 
+      map <- addLegend(map, "bottomleft", pal = pm25palette,
+                       className = "info legend legend-circles",
                        values = pm25[, which(colnames(pm25) == format(input$covid_dt + days(6), "PM25_%Y%m%d"))],
                        title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_right_sensor == "aqi") {
       map <- addLegend(map, "bottomleft", pal = aqipalette, 
+                       className = "info legend legend-circles",
                        values = aqi[, which(colnames(aqi) == format(input$covid_dt + days(6), "AQI_%Y%m%d"))],
                        labFormat = function(type, cuts, p) {
                          paste0(aqi.legend.labels)
