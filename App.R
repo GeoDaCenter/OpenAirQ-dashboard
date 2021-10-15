@@ -2052,7 +2052,7 @@ pm25.map
 
     dashMap(this.pm10.name, pm10.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "PM10", 
+            EPApoints = epa.sensors, VarName = "PM10", 
             units = "(ug/m3)")
 
   })
@@ -2089,10 +2089,10 @@ pm25.map
   observeEvent(input$pm10_chi_zoom, {
     if(input$sidebar == "pm10") {
       if(input$pm10_chi_zoom == "chi") {
-        chiView("pm10_map", chi.map, EPApoints = epa.points, VarName = "PM10") 
+        chiView("pm10_map", chi.map, EPApoints = epa.sensors, VarName = "PM10") 
       }
       else if (input$pm10_chi_zoom == "lac") {
-        lacView("pm10_map", large.area, EPApoints = epa.points, VarName = "PM10")
+        lacView("pm10_map", large.area, EPApoints = epa.sensors, VarName = "PM10")
       }
     }
   })
@@ -2107,7 +2107,7 @@ pm25.map
 
     dashMap(this.co.name, co.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "CO")
+            EPApoints = epa.sensors, VarName = "CO")
 
   })
 
@@ -2143,10 +2143,10 @@ pm25.map
   observeEvent(input$co_chi_zoom, {
     if(input$sidebar == "co") {
       if(input$co_chi_zoom == "chi") {
-        chiView("co_map", chi.map, EPApoints = epa.points, VarName = "CO") 
+        chiView("co_map", chi.map, EPApoints = epa.sensors, VarName = "CO") 
       }
       else if (input$co_chi_zoom == "lac") {
-        lacView("co_map", large.area, EPApoints = epa.points, VarName = "CO")
+        lacView("co_map", large.area, EPApoints = epa.sensors, VarName = "CO")
       }
     }
   })
@@ -2161,7 +2161,7 @@ pm25.map
 
     dashMap(this.no2.name, no2.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "NO2")
+            EPApoints = epa.sensors, VarName = "NO2")
 
   })
 
@@ -2197,10 +2197,10 @@ pm25.map
   observeEvent(input$no2_chi_zoom, {
     if(input$sidebar == "no2") {
       if(input$no2_chi_zoom == "chi") {
-        chiView("no2_map", chi.map, EPApoints = epa.points, VarName = "NO2") 
+        chiView("no2_map", chi.map, EPApoints = epa.sensors, VarName = "NO2") 
       }
       else if (input$no2_chi_zoom == "lac") {
-        lacView("no2_map", large.area, EPApoints = epa.points, VarName = "NO2")
+        lacView("no2_map", large.area, EPApoints = epa.sensors, VarName = "NO2")
       }
     }
   })
@@ -2215,7 +2215,7 @@ pm25.map
 
     dashMap(this.o3.name, o3.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "Ozone")
+            EPApoints = epa.sensors, VarName = "Ozone")
 
   })
 
@@ -2251,10 +2251,10 @@ pm25.map
   observeEvent(input$o3_chi_zoom, {
     if(input$sidebar == "o3") {
       if(input$o3_chi_zoom == "chi") {
-        chiView("o3_map", chi.map, EPApoints = epa.points, VarName = "Ozone") 
+        chiView("o3_map", chi.map, EPApoints = epa.sensors, VarName = "Ozone") 
       }
       else if (input$o3_chi_zoom == "lac") {
-        lacView("o3_map", large.area, EPApoints = epa.points, VarName = "Ozone")
+        lacView("o3_map", large.area, EPApoints = epa.sensors, VarName = "Ozone")
       }
     }
   })
@@ -2269,7 +2269,7 @@ pm25.map
 
     dashMap(this.so2.name, so2.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "SO2")
+            EPApoints = epa.sensors, VarName = "SO2")
 
   })
 
@@ -2306,10 +2306,10 @@ pm25.map
   observeEvent(input$so2_chi_zoom, {
     if(input$sidebar == "so2") {
       if(input$so2_chi_zoom == "chi") {
-        chiView("so2_map", chi.map, EPApoints = epa.points, VarName = "SO2") 
+        chiView("so2_map", chi.map, EPApoints = epa.sensors, VarName = "SO2") 
       }
       else if (input$so2_chi_zoom == "lac") {
-        lacView("so2_map", large.area, EPApoints = epa.points, VarName = "SO2")
+        lacView("so2_map", large.area, EPApoints = epa.sensors, VarName = "SO2")
       }
     }
   })
@@ -2324,7 +2324,7 @@ pm25.map
 
     dashMap(this.pb.name, pb.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "Lead")
+            EPApoints = epa.sensors, VarName = "Lead")
 
   })
 
@@ -2362,10 +2362,10 @@ pm25.map
   observeEvent(input$pb_chi_zoom, {
     if(input$sidebar == "pb") {
       if(input$pb_chi_zoom == "chi") {
-        chiView("pb_map", chi.map, EPApoints = epa.points, VarName = "Lead") 
+        chiView("pb_map", chi.map, EPApoints = epa.sensors, VarName = "Lead") 
       }
       else if (input$pb_chi_zoom == "lac") {
-        lacView("pb_map", large.area, EPApoints = epa.points, VarName = "Lead")
+        lacView("pb_map", large.area, EPApoints = epa.sensors, VarName = "Lead")
       }
     }
   })
