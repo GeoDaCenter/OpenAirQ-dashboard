@@ -37,7 +37,7 @@ epa.points <- st_read("Data/EPA_Points")
 #Test PM2.5 setup for 5/25/21 meeting
 pm25.sensors <- read_csv("Data/PM25_Sensors_Monthly.csv")
 epa.sensors <- st_read("Data/EPA_Quarterly.geojson")
-
+faa.sensors <- st_read("Data/FAA_Quarterly.geojson")
 
 chi.map <- st_read("Data/Chicago")
 #chi.map <- sf::st_transform(chi.map, CRS('+proj=longlat +datum=WGS84'))
@@ -2549,7 +2549,7 @@ pm25.map
 
     dashMap(this.temp.name, temp.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "Temp", units = "(F)")
+            EPApoints = faa.sensors, VarName = "Temp", units = "(F)")
   })
 
   observe({
@@ -2584,10 +2584,10 @@ pm25.map
   observeEvent(input$temp_chi_zoom, {
     if(input$sidebar == "temp") {
       if(input$temp_chi_zoom == "chi") {
-        chiView("temp_map", chi.map, EPApoints = epa.points, VarName = "Temp") 
+        chiView("temp_map", chi.map, EPApoints = faa.sensors, VarName = "Temp") 
       }
       else if (input$temp_chi_zoom == "lac") {
-        lacView("temp_map", large.area, EPApoints = epa.points, VarName = "Temp")
+        lacView("temp_map", large.area, EPApoints = faa.sensors, VarName = "Temp")
       }
     }
   })
@@ -2601,7 +2601,7 @@ pm25.map
     
     dashMap(this.pressure.name, pressure.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.points, VarName = "Pressure", units = "(mbar)")
+            EPApoints = faa.sensors, VarName = "Pressure", units = "(mbar)")
   })
   
   observe({
@@ -2636,10 +2636,10 @@ pm25.map
   observeEvent(input$pressure_chi_zoom, {
     if(input$sidebar == "pressure") {
       if(input$pressure_chi_zoom == "chi") {
-        chiView("pressure_map", chi.map, EPApoints = epa.points, VarName = "Pressure") 
+        chiView("pressure_map", chi.map, EPApoints = faa.sensors, VarName = "Pressure") 
       }
       else if (input$pressure_chi_zoom == "lac") {
-        lacView("pressure_map", large.area, EPApoints = epa.points, VarName = "Pressure")
+        lacView("pressure_map", large.area, EPApoints = faa.sensors, VarName = "Pressure")
       }
     }
   })
