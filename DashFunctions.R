@@ -292,9 +292,10 @@ lacView <- function(proxy, area, EPApoints = NULL, VarName = Null) {
 #Creates palette
 #qtr: Palette covers single quarter
 #ovr: Palette covers entire 5 year period (input "AOD", "NDVI", etc)
+#pt.bounds: Extends palette to capture sensor readings above or below raster bounds
 
 palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow", "orange", "red"), 
-                         raster, nacolor = "transparent") {
+                         raster, nacolor = "transparent", pt.bounds = NULL) {
   if(style == "qtr" || style == "mon") {
     
     this.raster <- raster[[layername]]
@@ -320,6 +321,10 @@ palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow",
     max <- max(maxValue(this.raster))
     min <- min(minValue(this.raster))
   }
+  
+  if (!is.null(pt.bounds))
+    min = min(min, pt.bounds[1])
+    max = max(max, pt.bounds[2])
 
   inc <- (max - min) / 10 
     

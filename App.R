@@ -18,6 +18,7 @@ library(scales)
 ##### DATA LOADING START #####
 source("DashFunctions.R")
 
+monthly.raster <- stack("Data/Monthly_Raster.grd")
 master.raster <- stack("Data/Master_Raster.grd")
 # raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
@@ -1921,55 +1922,62 @@ server <- function(input, output) {
 ###### ISAAC SEARCH ####
   output$pm25_map <- renderLeaflet({
     
-    this.pm25.name <- "7-2016"
+    this.pm25.date <- "7-2016"
+    this.pm25.name <- "PM25_7_16"
 
     in.pal <- "mon"
 
     
     this.pm25.data <- pm25.sensors %>%
-      dplyr::filter(moyr == this.pm25.name)
+      dplyr::filter(moyr == this.pm25.date)
 
-    pm25.pal <- palFromVectorLayer(filtereddata = this.pm25.data,
-                                   completedata = pm25.sensors,
-                                   style = in.pal)
-    
+    pm25.pal <- palFromLayer(this.pm25.name, 
+                             style = in.pal, 
+                             raster = monthly.raster,
+                             pt.bounds = c(min(this.pm25.data$avg_pm25),
+                                           max(this.pm25.data$avg_pm25)))
+
     pm25.map <- leaflet(pm25.sensors) %>%
       addProviderTiles("OpenStreetMap.HOT") %>%
-      addPolygons(data = large.area, 
+      addPolygons(data = large.area,
                   color = "darkslategray",
-                  fillOpacity  = 0.00, 
+                  fillOpacity  = 0.00,
                   stroke = TRUE,
                   opacity = 1,
                   layerId = large.area$FIPS,
                   weight = 1,
                   highlight = highlightOptions(
-                    weight = 2, 
-                    color = "gray", 
+                    weight = 2,
+                    color = "gray",
                     fillOpacity = 0.05)) %>%
+      addRasterImage(monthly.raster[[this.pm25.name]], opacity = 0.8, colors = pm25.pal) %>%
       addCircleMarkers(lng = this.pm25.data$Longitude,
                  lat = this.pm25.data$Latitude,
-                 color = pm25.pal(this.pm25.data$avg_pm25),
+                 fillColor = pm25.pal(this.pm25.data$avg_pm25),
+                 stroke = TRUE,
+                 color = 'black',
                  layerId = this.pm25.data$`Site Num`,
-                 radius = 3,
-                 opacity = 0.9,
+                 fillOpacity = 1,
                  label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " ")) %>%
       leaflet::addLegend(pal = pm25.pal, 
-                         values = this.pm25.data$avg_pm25,
+                         values = c(values(monthly.raster[[this.pm25.name]]),
+                                    this.pm25.data$avg_pm25), 
                          title = "PM2.5 Concentration (ug/m3)",
                          labFormat = labelFormat(suffix = " ug/m3"))
 pm25.map
+
     # pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
     # print(paste("main", this.pm25.name))
-    #Tweaking dashmap() function to work for this 
-    ##### Generate Leaflet Map 
-    
-    # dashMap(this.pm25.name, pm25.pal, 
-    #         raster = master.raster, area = large.area, 
-    #         layerId = large.area$FIPS, EPApoints = epa.points, 
-    #         VarName = "PM25", 
-    #         units = "(ug/m3)")
-    
-    
+    # #Tweaking dashmap() function to work for this
+    # ##### Generate Leaflet Map
+    # 
+    # dashMap(this.pm25.name, pm25.pal,
+    #          raster = master.raster, area = large.area,
+    #          layerId = large.area$FIPS, EPApoints = epa.points,
+    #          VarName = "PM25",
+    #          units = "(ug/m3)")
+
+
     
     
   })
@@ -1977,6 +1985,7 @@ pm25.map
   observe({
     if (input$sidebar == "pm25") {
     in.date <- input$pm25_dt
+    this.pm25.name <- getLayerName(in.date, "PM25", period = "mon")
 
     
     #convert slider to date format used by the pm2.5 dataset
@@ -1986,23 +1995,30 @@ pm25.map
       dplyr::filter(moyr == pm25.slider.name)
     
     in.pal <- input$pm25_rad
-    pm25.pal <- palFromVectorLayer(filtereddata = this.pm25.data,
-                                   completedata = pm25.sensors,
-                                   style = in.pal)
+    
+    pm25.pal <- palFromLayer(this.pm25.name, 
+                             style = in.pal, 
+                             raster = monthly.raster,
+                             pt.bounds = c(min(this.pm25.data$avg_pm25),
+                                           max(this.pm25.data$avg_pm25)))
     
     leafletProxy("pm25_map") %>%
       leaflet::clearMarkers() %>%
       leaflet::clearControls() %>%
+      leaflet::clearImages() %>%
+      addRasterImage(monthly.raster[[this.pm25.name]], opacity = 0.8, colors = pm25.pal) %>%
       addCircleMarkers(lng = this.pm25.data$Longitude,
                        lat = this.pm25.data$Latitude, 
-                       color = pm25.pal(this.pm25.data$avg_pm25),
+                       fillColor = pm25.pal(this.pm25.data$avg_pm25),
+                       stroke = TRUE,
+                       color = 'black',
                        layerId = this.pm25.data$`Site Num`,
-                       radius = 3,
-                       opacity = 0.9, 
+                       fillOpacity = 1,
                        label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " ")) %>%
       leaflet::addLegend(pal = pm25.pal, 
-                         values = this.pm25.data$avg_pm25,
-                         title = "PM2.5 Concentration",
+                         values = c(values(monthly.raster[[this.pm25.name]]),
+                                    this.pm25.data$avg_pm25), 
+                         title = "PM2.5 Concentration (ug/m3)",
                          labFormat = labelFormat(suffix = " ug/m3"))
     
     # this.pm25.name <- getLayerName(in.date, "PM25")
