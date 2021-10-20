@@ -180,7 +180,13 @@ sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.
                        opacity = 0.6,
                        radius = 5,
                        weight = 2,
-                       label = points[, 3])
+                       label = points[, 3]) %>%
+    addLegend(title = "Icon Key",
+              position = "bottomright",
+              colors = c("white; width:15px; height:15px; border:2px solid black; border-radius: 50%",
+                         "yellow; width:25px; height:25px; border:3px solid yellow; border-radius: 0%"),
+              labels = c("<div style='display: inline-block;height:15px;margin-top: 4px;line-height:15px;'> Observed Reading</div>",
+                         "<div style='display: inline-block;height:25px;margin-top: 4px;line-height:25px;'> Interpolated Estimate </div>"))
   }
 }
 
