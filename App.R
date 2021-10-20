@@ -33,12 +33,15 @@ county.avgs$Name <- as.character(county.avgs$Name)
 
 var.avgs <- colMeans(county.avgs[,4:ncol(county.avgs)], na.rm = T)
 
-epa.points <- st_read("Data/EPA_Points")
+#epa.points <- st_read("Data/EPA_Points")
 
 #Test PM2.5 setup for 5/25/21 meeting
-pm25.sensors <- read_csv("Data/PM25_Sensors_Monthly.csv")
-epa.sensors <- st_read("Data/EPA_Quarterly.geojson")
-faa.sensors <- st_read("Data/FAA_Quarterly.geojson")
+#pm25.sensors <- read_csv("Data/PM25_Sensors_Monthly.csv")
+epa.quarterly <- st_read("Data/EPA_Quarterly.geojson")
+faa.quarterly <- st_read("Data/FAA_Quarterly.geojson")
+
+epa.monthly <- st_read("Data/EPA_Monthly.geojson")
+faa.monthly <- st_read("Data/FAA_Monthly.geojson")
 
 chi.map <- st_read("Data/Chicago")
 #chi.map <- sf::st_transform(chi.map, CRS('+proj=longlat +datum=WGS84'))
@@ -1922,60 +1925,24 @@ server <- function(input, output) {
 ###### ISAAC SEARCH ####
   output$pm25_map <- renderLeaflet({
     
-    this.pm25.date <- "7-2016"
     this.pm25.name <- "PM25_7_16"
 
     in.pal <- "mon"
-
     
-    this.pm25.data <- pm25.sensors %>%
-      dplyr::filter(moyr == this.pm25.date)
+    points = epa.monthly[[this.pm25.name]]
+    pt.bounds = c(min(points, na.rm=TRUE), max(points, na.rm=TRUE))
 
     pm25.pal <- palFromLayer(this.pm25.name, 
                              style = in.pal, 
                              raster = monthly.raster,
-                             pt.bounds = c(min(this.pm25.data$avg_pm25),
-                                           max(this.pm25.data$avg_pm25)))
+                             pt.bounds = pt.bounds)
 
-    pm25.map <- leaflet(pm25.sensors) %>%
-      addProviderTiles("OpenStreetMap.HOT") %>%
-      addPolygons(data = large.area,
-                  color = "darkslategray",
-                  fillOpacity  = 0.00,
-                  stroke = TRUE,
-                  opacity = 1,
-                  layerId = large.area$FIPS,
-                  weight = 1,
-                  highlight = highlightOptions(
-                    weight = 2,
-                    color = "gray",
-                    fillOpacity = 0.05)) %>%
-      addRasterImage(monthly.raster[[this.pm25.name]], opacity = 0.8, colors = pm25.pal) %>%
-      addCircleMarkers(lng = this.pm25.data$Longitude,
-                 lat = this.pm25.data$Latitude,
-                 fillColor = pm25.pal(this.pm25.data$avg_pm25),
-                 stroke = TRUE,
-                 color = 'black',
-                 layerId = this.pm25.data$`Site Num`,
-                 fillOpacity = 1,
-                 label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " ")) %>%
-      leaflet::addLegend(pal = pm25.pal, 
-                         values = c(values(monthly.raster[[this.pm25.name]]),
-                                    this.pm25.data$avg_pm25), 
-                         title = "PM2.5 Concentration (ug/m3)",
-                         labFormat = labelFormat(suffix = " ug/m3"))
-pm25.map
 
-    # pm25.pal <- palFromLayer(this.pm25.name, style = in.pal, raster = master.raster)
-    # print(paste("main", this.pm25.name))
-    # #Tweaking dashmap() function to work for this
-    # ##### Generate Leaflet Map
-    # 
-    # dashMap(this.pm25.name, pm25.pal,
-    #          raster = master.raster, area = large.area,
-    #          layerId = large.area$FIPS, EPApoints = epa.points,
-    #          VarName = "PM25",
-    #          units = "(ug/m3)")
+    dashMap(this.pm25.name, pm25.pal,
+            raster = monthly.raster, area = large.area,
+            layerId = large.area$FIPS, EPApoints = epa.monthly,
+            VarName = "PM25",
+            units = "(ug/m3)")
 
 
     
@@ -1986,48 +1953,20 @@ pm25.map
     if (input$sidebar == "pm25") {
     in.date <- input$pm25_dt
     this.pm25.name <- getLayerName(in.date, "PM25", period = "mon")
-
-    
-    #convert slider to date format used by the pm2.5 dataset
-    pm25.slider.name <- paste(month(in.date), year(in.date), sep = "-")
-    # old.pm25.data <- this.pm25.data ###ERROR Source
-    this.pm25.data <- pm25.sensors %>%
-      dplyr::filter(moyr == pm25.slider.name)
     
     in.pal <- input$pm25_rad
+    
+    points = epa.monthly[[this.pm25.name]]
+    pt.bounds = c(min(points, na.rm=TRUE), max(points, na.rm=TRUE))
+    
     
     pm25.pal <- palFromLayer(this.pm25.name, 
                              style = in.pal, 
                              raster = monthly.raster,
-                             pt.bounds = c(min(this.pm25.data$avg_pm25),
-                                           max(this.pm25.data$avg_pm25)))
-    
-    leafletProxy("pm25_map") %>%
-      leaflet::clearMarkers() %>%
-      leaflet::clearControls() %>%
-      leaflet::clearImages() %>%
-      addRasterImage(monthly.raster[[this.pm25.name]], opacity = 0.8, colors = pm25.pal) %>%
-      addCircleMarkers(lng = this.pm25.data$Longitude,
-                       lat = this.pm25.data$Latitude, 
-                       fillColor = pm25.pal(this.pm25.data$avg_pm25),
-                       stroke = TRUE,
-                       color = 'black',
-                       layerId = this.pm25.data$`Site Num`,
-                       fillOpacity = 1,
-                       label = paste(this.pm25.data$avg_pm25, "ug/m3", sep = " ")) %>%
-      leaflet::addLegend(pal = pm25.pal, 
-                         values = c(values(monthly.raster[[this.pm25.name]]),
-                                    this.pm25.data$avg_pm25), 
-                         title = "PM2.5 Concentration (ug/m3)",
-                         labFormat = labelFormat(suffix = " ug/m3"))
-    
-    # this.pm25.name <- getLayerName(in.date, "PM25")
-    # 
-    # 
-    # 
-    
-    # 
-    # sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = master.raster, units = "(ug/m3)")
+                             pt.bounds = pt.bounds)
+
+
+    sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = monthly.raster, units = "(ug/m3)", EPApoints = epa.monthly)
     }
   })
   
@@ -2068,7 +2007,7 @@ pm25.map
 
     dashMap(this.pm10.name, pm10.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.sensors, VarName = "PM10", 
+            EPApoints = epa.quarterly, VarName = "PM10", 
             units = "(ug/m3)")
 
   })
@@ -2082,7 +2021,7 @@ pm25.map
 
     pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = master.raster)
 
-    sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = master.raster, units = "(ug/m3)")
+    sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = master.raster, units = "(ug/m3)", EPApoints = epa.quarterly)
     }
   })
   
@@ -2105,10 +2044,10 @@ pm25.map
   observeEvent(input$pm10_chi_zoom, {
     if(input$sidebar == "pm10") {
       if(input$pm10_chi_zoom == "chi") {
-        chiView("pm10_map", chi.map, EPApoints = epa.sensors, VarName = "PM10") 
+        chiView("pm10_map", chi.map, EPApoints = epa.quarterly, VarName = "PM10") 
       }
       else if (input$pm10_chi_zoom == "lac") {
-        lacView("pm10_map", large.area, EPApoints = epa.sensors, VarName = "PM10")
+        lacView("pm10_map", large.area, EPApoints = epa.quarterly, VarName = "PM10")
       }
     }
   })
@@ -2123,7 +2062,7 @@ pm25.map
 
     dashMap(this.co.name, co.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.sensors, VarName = "CO")
+            EPApoints = epa.quarterly, VarName = "CO")
 
   })
 
@@ -2136,7 +2075,7 @@ pm25.map
 
       co.pal <- palFromLayer(this.co.name, style = in.pal, raster = master.raster)
 
-      sliderProxy("co_map", this.co.name, co.pal, raster = master.raster)
+      sliderProxy("co_map", this.co.name, co.pal, raster = master.raster, EPApoints = epa.quarterly)
     }
   })
   
@@ -2159,10 +2098,10 @@ pm25.map
   observeEvent(input$co_chi_zoom, {
     if(input$sidebar == "co") {
       if(input$co_chi_zoom == "chi") {
-        chiView("co_map", chi.map, EPApoints = epa.sensors, VarName = "CO") 
+        chiView("co_map", chi.map, EPApoints = epa.quarterly, VarName = "CO") 
       }
       else if (input$co_chi_zoom == "lac") {
-        lacView("co_map", large.area, EPApoints = epa.sensors, VarName = "CO")
+        lacView("co_map", large.area, EPApoints = epa.quarterly, VarName = "CO")
       }
     }
   })
@@ -2177,7 +2116,7 @@ pm25.map
 
     dashMap(this.no2.name, no2.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.sensors, VarName = "NO2")
+            EPApoints = epa.quarterly, VarName = "NO2")
 
   })
 
@@ -2190,7 +2129,7 @@ pm25.map
 
     no2.pal <- palFromLayer(this.no2.name, style = in.pal, raster = master.raster)
 
-    sliderProxy("no2_map", this.no2.name, no2.pal, raster = master.raster)
+    sliderProxy("no2_map", this.no2.name, no2.pal, raster = master.raster, EPApoints = epa.quarterly)
     }
   })
   
@@ -2213,10 +2152,10 @@ pm25.map
   observeEvent(input$no2_chi_zoom, {
     if(input$sidebar == "no2") {
       if(input$no2_chi_zoom == "chi") {
-        chiView("no2_map", chi.map, EPApoints = epa.sensors, VarName = "NO2") 
+        chiView("no2_map", chi.map, EPApoints = epa.quarterly, VarName = "NO2") 
       }
       else if (input$no2_chi_zoom == "lac") {
-        lacView("no2_map", large.area, EPApoints = epa.sensors, VarName = "NO2")
+        lacView("no2_map", large.area, EPApoints = epa.quarterly, VarName = "NO2")
       }
     }
   })
@@ -2231,7 +2170,7 @@ pm25.map
 
     dashMap(this.o3.name, o3.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.sensors, VarName = "Ozone")
+            EPApoints = epa.quarterly, VarName = "Ozone")
 
   })
 
@@ -2244,7 +2183,7 @@ pm25.map
 
     o3.pal <- palFromLayer(this.o3.name, style = in.pal, raster = master.raster)
 
-    sliderProxy("o3_map", this.o3.name, o3.pal, raster = master.raster)
+    sliderProxy("o3_map", this.o3.name, o3.pal, raster = master.raster, EPApoints = epa.quarterly)
     }
   })
   
@@ -2267,10 +2206,10 @@ pm25.map
   observeEvent(input$o3_chi_zoom, {
     if(input$sidebar == "o3") {
       if(input$o3_chi_zoom == "chi") {
-        chiView("o3_map", chi.map, EPApoints = epa.sensors, VarName = "Ozone") 
+        chiView("o3_map", chi.map, EPApoints = epa.quarterly, VarName = "Ozone") 
       }
       else if (input$o3_chi_zoom == "lac") {
-        lacView("o3_map", large.area, EPApoints = epa.sensors, VarName = "Ozone")
+        lacView("o3_map", large.area, EPApoints = epa.quarterly, VarName = "Ozone")
       }
     }
   })
@@ -2285,7 +2224,7 @@ pm25.map
 
     dashMap(this.so2.name, so2.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.sensors, VarName = "SO2")
+            EPApoints = epa.quarterly, VarName = "SO2")
 
   })
 
@@ -2298,7 +2237,7 @@ pm25.map
 
       so2.pal <- palFromLayer(this.so2.name, style = in.pal, raster = master.raster)
 
-      sliderProxy("so2_map", this.so2.name, so2.pal, raster = master.raster)
+      sliderProxy("so2_map", this.so2.name, so2.pal, raster = master.raster, EPApoints = epa.quarterly)
     }
 
   })
@@ -2322,10 +2261,10 @@ pm25.map
   observeEvent(input$so2_chi_zoom, {
     if(input$sidebar == "so2") {
       if(input$so2_chi_zoom == "chi") {
-        chiView("so2_map", chi.map, EPApoints = epa.sensors, VarName = "SO2") 
+        chiView("so2_map", chi.map, EPApoints = epa.quarterly, VarName = "SO2") 
       }
       else if (input$so2_chi_zoom == "lac") {
-        lacView("so2_map", large.area, EPApoints = epa.sensors, VarName = "SO2")
+        lacView("so2_map", large.area, EPApoints = epa.quarterly, VarName = "SO2")
       }
     }
   })
@@ -2340,7 +2279,7 @@ pm25.map
 
     dashMap(this.pb.name, pb.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.sensors, VarName = "Lead")
+            EPApoints = epa.quarterly, VarName = "Lead")
 
   })
 
@@ -2354,7 +2293,7 @@ pm25.map
 
       pb.pal <- palFromLayer(this.pb.name, style = in.pal, raster = master.raster)
 
-      sliderProxy("pb_map", this.pb.name, pb.pal, raster = master.raster)
+      sliderProxy("pb_map", this.pb.name, pb.pal, raster = master.raster, EPApoints = epa.quarterly)
 
     }
   })
@@ -2378,10 +2317,10 @@ pm25.map
   observeEvent(input$pb_chi_zoom, {
     if(input$sidebar == "pb") {
       if(input$pb_chi_zoom == "chi") {
-        chiView("pb_map", chi.map, EPApoints = epa.sensors, VarName = "Lead") 
+        chiView("pb_map", chi.map, EPApoints = epa.quarterly, VarName = "Lead") 
       }
       else if (input$pb_chi_zoom == "lac") {
-        lacView("pb_map", large.area, EPApoints = epa.sensors, VarName = "Lead")
+        lacView("pb_map", large.area, EPApoints = epa.quarterly, VarName = "Lead")
       }
     }
   })
@@ -2565,7 +2504,7 @@ pm25.map
 
     dashMap(this.temp.name, temp.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = faa.sensors, VarName = "Temp", units = "(F)")
+            EPApoints = faa.quarterly, VarName = "Temp", units = "(F)")
   })
 
   observe({
@@ -2577,7 +2516,7 @@ pm25.map
 
       temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = master.raster)
 
-      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster, units = "(F)")
+      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster, units = "(F)", EPApoints = faa.quarterly)
     }
   })
   
@@ -2600,10 +2539,10 @@ pm25.map
   observeEvent(input$temp_chi_zoom, {
     if(input$sidebar == "temp") {
       if(input$temp_chi_zoom == "chi") {
-        chiView("temp_map", chi.map, EPApoints = faa.sensors, VarName = "Temp") 
+        chiView("temp_map", chi.map, EPApoints = faa.quarterly, VarName = "Temp") 
       }
       else if (input$temp_chi_zoom == "lac") {
-        lacView("temp_map", large.area, EPApoints = faa.sensors, VarName = "Temp")
+        lacView("temp_map", large.area, EPApoints = faa.quarterly, VarName = "Temp")
       }
     }
   })
@@ -2617,7 +2556,7 @@ pm25.map
     
     dashMap(this.pressure.name, pressure.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = faa.sensors, VarName = "Pressure", units = "(mbar)")
+            EPApoints = faa.quarterly, VarName = "Pressure", units = "(mbar)")
   })
   
   observe({
@@ -2629,7 +2568,7 @@ pm25.map
       
       pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = master.raster)
       
-      sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = master.raster, units = "(mbar)")
+      sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = master.raster, units = "(mbar)", EPApoints = faa.quarterly)
     }
   })
   
@@ -2652,10 +2591,10 @@ pm25.map
   observeEvent(input$pressure_chi_zoom, {
     if(input$sidebar == "pressure") {
       if(input$pressure_chi_zoom == "chi") {
-        chiView("pressure_map", chi.map, EPApoints = faa.sensors, VarName = "Pressure") 
+        chiView("pressure_map", chi.map, EPApoints = faa.quarterly, VarName = "Pressure") 
       }
       else if (input$pressure_chi_zoom == "lac") {
-        lacView("pressure_map", large.area, EPApoints = faa.sensors, VarName = "Pressure")
+        lacView("pressure_map", large.area, EPApoints = faa.quarterly, VarName = "Pressure")
       }
     }
   })

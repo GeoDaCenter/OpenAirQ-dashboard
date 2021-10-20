@@ -139,10 +139,17 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
       longlat <- st_coordinates(points)
       points <- cbind(longlat, st_drop_geometry(points))
       dMap <- dMap %>%
-        addCircles(lng = points$X,
-                   lat = points$Y,
-                   label = points[, 3],
-                   radius = 2, color = "black", opacity = 0.9)
+              addCircleMarkers(lng = points$X,
+                               lat = points$Y,
+                               fillColor = layerpal(points[,3]),
+                               fillOpacity = 1,
+                               stroke = TRUE,
+                               color = 'black',
+                               dashArray = "4 1 2 3",
+                               opacity = 0.6,
+                               radius = 5,
+                               weight = 2,
+                               label = points[, 3])
     }
     
     dMap
@@ -150,12 +157,31 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
 
 ##### For use in observe function with slider
 
-sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.8, units = "") {
+sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.8, units = "", EPApoints = NULL) {
   leafletProxy(mapname) %>%
     clearControls() %>%
     clearImages() %>%
+    clearMarkers() %>%
     addRasterImage(raster[[layername]], opacity = rasterOpacity, colors = layerpal) %>%
     leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = paste(gsub("_.*","",layername), units))
+  
+  if (!is.null(EPApoints)) {
+    points <- na.omit(EPApoints[layername])
+    longlat <- st_coordinates(points)
+    points <- cbind(longlat, st_drop_geometry(points))
+    leafletProxy(mapname) %>%
+      addCircleMarkers(lng = points$X,
+                       lat = points$Y,
+                       fillColor = layerpal(points[,3]),
+                       fillOpacity = 1,
+                       stroke = TRUE,
+                       color = 'black',
+                       dashArray = "4 1 2 3",
+                       opacity = 0.6,
+                       radius = 5,
+                       weight = 2,
+                       label = points[, 3])
+  }
 }
 
 
