@@ -272,6 +272,17 @@ pressure.name <- "Barometric Pressure"
 pressure.description <- descriptions$Description[descriptions["Variable"] == "Pressure"]
 pressure.source <- descriptions$Source[descriptions["Variable"] == "Pressure"]
 
+##### PRESSURE END #####
+
+##### PRECIP START #####
+
+precip.tabname <- "precip"
+precip.name <- "Precipitation"
+precip.description <- descriptions$Description[descriptions["Variable"] == "Precip"]
+precip.source <- descriptions$Source[descriptions["Variable"] == "Precip"]
+
+##### PRECIP END #####
+
 ##### PLOT ADJUSTMENT START #####
 
 master.raster$PECount[which(getValues(master.raster$PECount) == 0)] <- NA ### Needed for plotting; raster error when try to write new file
@@ -454,15 +465,15 @@ ui <- dashboardPage(
     menuItem("EPA Sensor Data", icon = icon("envira"),
              menuSubItem("PM2.5", tabName = "pm25"),
              menuSubItem("PM10", tabName = "pm10"),
-             menuSubItem("Carbon Monoxide", tabName = "coXX"),
-             menuSubItem("Nitrogen Dioxide", tabName = "no2XX"),
-             menuSubItem("Ozone", tabName = "o3XX"),
-             menuSubItem("Sulfur Dioxide", tabName = "so2XX"),
-             menuSubItem("Lead", tabName = "pbXX")),
+             menuSubItem("Carbon Monoxide", tabName = "co"),
+             menuSubItem("Nitrogen Dioxide", tabName = "no2"),
+             menuSubItem("Ozone", tabName = "o3"),
+             menuSubItem("Sulfur Dioxide", tabName = "so2"),
+             menuSubItem("Lead", tabName = "pb")),
     menuItem("Meteorological Data", icon = icon("thermometer-half"),
              menuSubItem("Temperature", tabName = "temp"),
              menuSubItem("Pressure", tabName = "pressure"),
-             menuSubItem("Precipitation", tabName = "precip2")),
+             menuSubItem("Precipitation", tabName = "precip")),
     menuItem("Remote-Sensed Data", icon = icon("wifi"),
              menuSubItem("Aerosol Optical Depth", tabName = "aod"),
              menuSubItem("NDVI", tabName = "ndvi"),
@@ -718,36 +729,9 @@ ui <- dashboardPage(
     generateQuarterlyTab(pressure.tabname, pressure.name, pressure.description, pressure.source),
 
     ##### PRECIPITATION START #####
-    tabItem(tabName = "precip",
-            fluidRow(
-              box(
-                width = 4,
-                h3("Precipitation"),
-                p("Aerosol optical depth is a measure of the extinction of the solar beam by dust
-                  and haze. In other words, particles in the atmosphere (dust, smoke, pollution)
-                  can block sunlight by absorbing or by scattering light."), #### NEATER DEFINITION
-                br(),
-                h4("Data Source"),
-                p("We use data directly from NASA. The Moderate Resolution Imaging Spectroradiometer
-                  (MODIS) satellite provides daily global coverage, but the 10 km resolution of its
-                  aerosol optical depth (AOD) product is not suitable for studying spatial variability
-                  of aerosols in urban areas. Recently, a new Multi-Angle Implementation of Atmospheric
-                  Correction (MAIAC) algorithm was developed for MODIS which provides AOD at 1 km
-                  resolution.") #### FIX
-
-                ),
-
-              box(width = 8,
-                  sliderInput("precip_dt", "Select quarter:",
-                              min = strptime("2014/01/01","%Y/%m/%d"),
-                              max = strptime("2018/12/31","%Y/%m/%d"),
-                              value = strptime("2016/07/01","%Y/%m/%d"),
-                              timeFormat = "%Y/%m",
-                              step = as.difftime(92, units = "days"),
-                              animate = animationOptions(interval = 2000)),
-                  leafletOutput("precip_map",height = mapheight))
-
-                )),
+    
+    generateQuarterlyTab(precip.tabname, precip.name, precip.description, precip.source),
+    
     ##### PRECIPITATION END #####
     
     ##### VULNERABILITY START #####
@@ -2498,7 +2482,7 @@ server <- function(input, output) {
 
     dashMap(this.temp.name, temp.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = faa.quarterly, VarName = "Temp", units = "(F)")
+            EPApoints = faa.quarterly, VarName = "Temp", units = "(\u00B0F)")
   })
 
   observe({
@@ -2510,7 +2494,7 @@ server <- function(input, output) {
 
       temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = master.raster)
 
-      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster, units = "(F)", EPApoints = faa.quarterly)
+      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster, units = "(\u00B0F)", EPApoints = faa.quarterly)
     }
   })
   
@@ -2595,17 +2579,57 @@ server <- function(input, output) {
 
   ##### PRECIPITATION START #####
 
-  ###### ADD IN PRECIP DATA WHEN IT"S AVAILABLE
-  # output$precip_map <- renderLeaflet({
-  #
-  #   in.date <- input$precip_dt
-  #   this.precip.name <- getLayerName(in.date, "Precip")
-  #
-  #   precip.pal <- palFromLayer(this.precip.name, raster = master.raster)
-  #
-  #   precip.map <- dashMap(this.precip.name, precip.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS)
-  # })
-  #
+  ##### ADD IN PRECIP DATA WHEN IT"S AVAILABLE
+  output$precip_map <- renderLeaflet({
+  
+    this.precip.name <- "Precip_3_16"
+    in.pal <- "ovr"
+  
+    precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = master.raster)
+  
+    precip.map <- dashMap(this.precip.name, precip.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS,
+                          EPApoints = faa.quarterly, VarName = "Precip", units = "(inches)")
+  })
+
+  observe({
+    if(input$sidebar == "precip") {
+      in.date <- input$precip_dt
+      this.precip.name <- getLayerName(in.date, "Precip")
+      
+      in.pal <- input$precip_rad
+      
+      precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = master.raster)
+      
+      sliderProxy("precip_map", this.precip.name, precip.pal, raster = master.raster, units = "(inches)", EPApoints = faa.quarterly)
+    }
+  })
+  
+  observeEvent(input$precip_map_shape_click, {
+    if(input$sidebar == "precip") { #Optimize Dashboard speed by not observing outside of tab
+      if(input$precip_chi_zoom == "lac") {
+        
+        click <- input$precip_map_shape_click
+        
+        zoomMap("precip_map", click, large.area)
+      }
+      else if (input$precip_chi_zoom == "chi") {
+        click <- input$precip_map_shape_click
+        
+        zoomChiMap("precip_map", click, chi.map)
+      }
+    }
+  })
+  
+  observeEvent(input$precip_chi_zoom, {
+    if(input$sidebar == "precip") {
+      if(input$precip_chi_zoom == "chi") {
+        chiView("precip_map", chi.map, EPApoints = faa.quarterly, VarName = "Precip") 
+      }
+      else if (input$precip_chi_zoom == "lac") {
+        lacView("precip_map", large.area, EPApoints = faa.quarterly, VarName = "Precip")
+      }
+    }
+  })
 
   ##### PRECIPITATION END #####
   

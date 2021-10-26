@@ -338,6 +338,9 @@ palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow",
   } else if (style == "ovr") {
     layer.var <- substring(layername, 1, 3)
     
+    #### Hacky fix until "Pressure" and "Precip" are named differently.
+    if (layer.var == "Pre"){ layer.var <- substring(layername, 1, 4) }
+    
     this.raster <- raster[[which(grepl(layer.var, names(raster)))]]
     
     max <- max(maxValue(this.raster))
