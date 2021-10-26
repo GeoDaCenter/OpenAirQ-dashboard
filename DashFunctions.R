@@ -305,14 +305,6 @@ lacView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
                   weight = 2, 
                   color = "gray", 
                   fillOpacity = 0.05))
-  
-  if (!is.null(EPApoints)) {
-    this.proxy <- this.proxy %>%
-      addCircles(lng = EPApoints$Longitude[EPApoints$Var == VarName],
-                 lat = EPApoints$Latitude[EPApoints$Var == VarName],
-                 radius = 2, color = "black", opacity = 0.9)
-  }
-  
   this.proxy
   
 }
