@@ -122,6 +122,7 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
     addProviderTiles("OpenStreetMap.HOT") %>%
     addRasterImage(raster[[layername]], opacity = rasterOpacity, colors = layerpal) %>%
     leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = paste(gsub("_.*","",layername), units)) %>%
+    addMapPane("polys", zIndex=410) %>%
     addPolygons(data = area, 
                 color = "darkslategray",
                 fillOpacity  = 0.00, 
@@ -132,13 +133,15 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
                 highlight = highlightOptions(
                   weight = 2, 
                   color = "gray", 
-                  fillOpacity = 0.05))
+                  fillOpacity = 0.05),
+                options = pathOptions(pane = "polys"))
     
     if (!is.null(EPApoints)) {
       points <- na.omit(EPApoints[layername])
       longlat <- st_coordinates(points)
       points <- cbind(longlat, st_drop_geometry(points))
       dMap <- dMap %>%
+              addMapPane("points", zIndex = 420) %>%
               addCircleMarkers(lng = points$X,
                                lat = points$Y,
                                fillColor = layerpal(points[,3]),
@@ -149,7 +152,8 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
                                opacity = 0.6,
                                radius = 5,
                                weight = 2,
-                               label = points[, 3])
+                               label = points[, 3],
+                               options = pathOptions(pane = "points"))
     }
     
     dMap
@@ -180,7 +184,8 @@ sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.
                        opacity = 0.6,
                        radius = 5,
                        weight = 2,
-                       label = points[, 3]) %>%
+                       label = points[, 3],
+                       options = pathOptions(pane = "points")) %>%
     addLegend(title = "Icon Key",
               position = "bottomright",
               colors = c("white; width:15px; height:15px; border:2px solid black; border-radius: 50%",
@@ -274,19 +279,14 @@ chiView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
                 opacity = 1,
                 layerId = area$area_numbe,
                 weight = 1,
-                fillOpacity = 0.01)
-  
-  if (!is.null(EPApoints)) {
-    this.proxy <- this.proxy %>%
-      addCircles(lng = EPApoints$Longitude[EPApoints$Var == VarName],
-                 lat = EPApoints$Latitude[EPApoints$Var == VarName],
-                 radius = 2, color = "black", opacity = 0.9)
-  }
+                fillOpacity = 0.01,
+                options = list(zindex = 1))
+
   
   this.proxy
 }
 
-lacView <- function(proxy, area, EPApoints = NULL, VarName = Null) {
+lacView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
   
   this.proxy <- leafletProxy(proxy)
   this.proxy <- this.proxy %>%

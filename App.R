@@ -2369,9 +2369,6 @@ server <- function(input, output) {
         clearImages() %>%
         clearControls() %>%
         clearShapes()
-        # clearControls() %>%
-        # clearImages() %>%
-        # clearShapes()
       
       pe.proxy %>%
         flyTo(lng = -87.660456,
