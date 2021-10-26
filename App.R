@@ -1588,10 +1588,7 @@ server <- function(input, output) {
     nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = nn.raster)
     
     dashMap(this.nn.name, nn.pal, raster = nn.raster, area = large.area, 
-            layerId = large.area$FIPS) %>%
-      # this method to fix legend is crufty; strongly consider rewrite
-      clearControls() %>%
-      leaflet::addLegend(pal = nn.pal, values = values(nn.raster[[this.nn.name]]), title = "PM2.5 (ug/m3)")
+            layerId = large.area$FIPS, units = "Predicted PM2.5 (ug/m3)")
   })
   
   observe({
@@ -1615,10 +1612,7 @@ server <- function(input, output) {
        
       nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = nn.raster)
        
-      sliderProxy("nn_map", this.nn.name, nn.pal, raster = nn.raster) %>%
-        # this method to fix legend is crufty; strongly consider rewrite
-        clearControls() %>%
-        leaflet::addLegend(pal = nn.pal, values = values(nn.raster[[this.nn.name]]), title = "PM2.5 (ug/m3)")
+      sliderProxy("nn_map", this.nn.name, nn.pal, raster = nn.raster, units = "Predicted PM2.5 (ug/m3)")
     }
   })
   
