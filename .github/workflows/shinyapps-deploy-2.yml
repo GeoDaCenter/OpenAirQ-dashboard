@@ -1,4 +1,4 @@
-name: Run on push master, main
+name: Deploy Shiny App
   # Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
@@ -23,7 +23,7 @@ jobs:
     - name: execute
       run: >
         docker run
-        -e SHINY_ACC_NAME=${{ secrets.SHINY_ACC_NAME }}
+        -e SHINY_ACC_NAME=${{secrets.SHINY_ACC_NAME}}
         -e TOKEN=${{secrets.TOKEN}}
         -e SECRET=${{secrets.SECRET}}
         -e MASTERNAME=${{secrets.MASTER_NAME}}
