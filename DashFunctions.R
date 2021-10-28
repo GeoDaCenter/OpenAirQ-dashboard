@@ -469,52 +469,6 @@ densityPlotLabels <- function(date, res){
 }
 
 
-getPointData <- function(res){
-  if (res == "mon"){
-    points = epa.monthly
-  }
-  else{
-    points = epa.quarterly
-  }
-  return(points)
-}
-
-getRasterData <- function(res){
-  if (res == "mon"){
-    raster = monthly.raster
-  }
-  else{
-    raster = master.raster
-  }
-  
-  return(raster)
-}
-
-
-getPointFAA <- function(res){
-  if (res == "mon"){
-    points = faa.monthly
-  }
-  else{
-    points = faa.quarterly
-  }
-  return(points)
-}
-
-getRasterFAA <- function(res){
-  if (res == "mon"){
-    raster = faa.mon.raster
-    ### Super hacky thing to fix monthly FAA names to match master.raster.
-    n = nchar(names(raster))
-    names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
-  }
-  else{
-    raster = master.raster
-  }
-  
-  return(raster)
-}
-
 density_plot <- function(date, varname, res, points, xlab){
   
   this.name <- getLayerName(date, varname, period = res)

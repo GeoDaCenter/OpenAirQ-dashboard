@@ -1908,12 +1908,27 @@ server <- function(input, output) {
 ###### PM2.5 START #####
   
   pm25_points <- reactive({
-    return(getPointData(input$pm25_res))
+    if (input$pm25_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   pm25_raster <- reactive({
-    return(getRasterData(input$pm25_res))
-  })
+    
+    if (input$pm25_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
+  }) 
+  
   
   output$pm25_map <- renderLeaflet({
     
@@ -1969,7 +1984,7 @@ server <- function(input, output) {
   
   observeEvent(input$pm25_res, {
     if (input$sidebar == "pm25") P={
-      print("Input change")
+      
       print(input$pm25_dt)
       slider_vals = switchTimeRes(input$pm25_res)
 
@@ -2014,12 +2029,27 @@ server <- function(input, output) {
   ###### PM10 START #####
   
   pm10_points <- reactive({
-    return(getPointData(input$pm10_res))
+    if (input$pm10_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   pm10_raster <- reactive({
-    return(getRasterData(input$pm10_res))
-  })
+    
+    if (input$pm10_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
+  }) 
+  
   
   
   output$pm10_map <- renderLeaflet({
@@ -2057,7 +2087,7 @@ server <- function(input, output) {
   
   observeEvent(input$pm10_res, {
     if (input$sidebar == "pm10") P={
-      print("Input change")
+      
       print(input$pm10_dt)
       slider_vals = switchTimeRes(input$pm10_res)
       
@@ -2103,12 +2133,27 @@ server <- function(input, output) {
   ###### CO START #####
   
   co_points <- reactive({
-    return(getPointData(input$co_res))
+    if (input$co_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   co_raster <- reactive({
-    return(getRasterData(input$co_res))
-  })  
+    
+    if (input$co_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
+  }) 
+  
 
   output$co_map <- renderLeaflet({
 
@@ -2144,7 +2189,7 @@ server <- function(input, output) {
   
   observeEvent(input$co_res, {
     if (input$sidebar == "co") P={
-      print("Input change")
+      
       print(input$co_dt)
       slider_vals = switchTimeRes(input$co_res)
       
@@ -2190,12 +2235,27 @@ server <- function(input, output) {
   ###### NO2 START #####
   
   no2_points <- reactive({
-    return(getPointData(input$no2_res))
+    if (input$no2_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   no2_raster <- reactive({
-    return(getRasterData(input$no2_res))
-  })  
+    
+    if (input$no2_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
+  }) 
+  
   
   output$no2_map <- renderLeaflet({
 
@@ -2231,7 +2291,7 @@ server <- function(input, output) {
   
   observeEvent(input$no2_res, {
     if (input$sidebar == "no2") P={
-      print("Input change")
+      
       print(input$no2_dt)
       slider_vals = switchTimeRes(input$no2_res)
       
@@ -2276,14 +2336,28 @@ server <- function(input, output) {
   
   ###### O3 START #####
 
-
   o3_points <- reactive({
-    return(getPointData(input$o3_res))
+    if (input$o3_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   o3_raster <- reactive({
-    return(getRasterData(input$o3_res))
+    
+    if (input$o3_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
   }) 
+  
   
   output$o3_map <- renderLeaflet({
 
@@ -2318,7 +2392,7 @@ server <- function(input, output) {
   
   observeEvent(input$o3_res, {
     if (input$sidebar == "o3") P={
-      print("Input change")
+      
       print(input$o3_dt)
       slider_vals = switchTimeRes(input$o3_res)
       
@@ -2364,11 +2438,25 @@ server <- function(input, output) {
   ###### SO2 START #####
   
   so2_points <- reactive({
-    return(getPointData(input$so2_res))
+    if (input$so2_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   so2_raster <- reactive({
-    return(getRasterData(input$so2_res))
+    
+    if (input$so2_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
   }) 
 
   output$so2_map <- renderLeaflet({
@@ -2406,7 +2494,7 @@ server <- function(input, output) {
   
   observeEvent(input$so2_res, {
     if (input$sidebar == "so2") P={
-      print("Input change")
+      
       print(input$so2_dt)
       slider_vals = switchTimeRes(input$so2_res)
       
@@ -2452,11 +2540,25 @@ server <- function(input, output) {
   ###### PB START #####
   
   pb_points <- reactive({
-    return(getPointData(input$pb_res))
+    if (input$pb_res == "mon"){
+      points = epa.monthly
+    }
+    else{
+      points = epa.quarterly
+    }
+    return(points)
   })
   
   pb_raster <- reactive({
-    return(getRasterData(input$pb_res))
+  
+    if (input$pb_res == "mon"){
+      raster = monthly.raster
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
   }) 
   
   
@@ -2496,7 +2598,7 @@ server <- function(input, output) {
   
   observeEvent(input$pb_res, {
     if (input$sidebar == "pb") P={
-      print("Input change")
+      
       print(input$pb_dt)
       slider_vals = switchTimeRes(input$pb_res)
       
@@ -2712,11 +2814,27 @@ server <- function(input, output) {
   ###### FAA START #####
   
   temp_points <- reactive({
-    return(getPointFAA(input$temp_res))
+    if (input$temp_res == "mon"){
+      points = faa.monthly
+    }
+    else{
+      points = faa.quarterly
+    }
+    return(points)
   })
   
   temp_raster <- reactive({
-    return(getRasterFAA(input$temp_res))
+    if (input$temp_res == "mon"){
+      raster = faa.mon.raster
+      ### Super hacky thing to fix monthly FAA names to match master.raster.
+      n = nchar(names(raster))
+      names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
   }) 
   
   
@@ -2755,7 +2873,7 @@ server <- function(input, output) {
   
   observeEvent(input$temp_res, {
     if (input$sidebar == "temp") P={
-      print("Input change")
+      
       print(input$temp_dt)
       slider_vals = switchTimeRes(input$temp_res)
       
@@ -2798,11 +2916,27 @@ server <- function(input, output) {
   
   
   pressure_points <- reactive({
-    return(getPointFAA(input$pressure_res))
+    if (input$pressure_res == "mon"){
+      points = faa.monthly
+    }
+    else{
+      points = faa.quarterly
+    }
+    return(points)
   })
   
   pressure_raster <- reactive({
-    return(getRasterFAA(input$pressure_res))
+    if (input$pressure_res == "mon"){
+      raster = faa.mon.raster
+      ### Super hacky thing to fix monthly FAA names to match master.raster.
+      n = nchar(names(raster))
+      names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
   }) 
   
   output$pressure_map <- renderLeaflet({
@@ -2837,7 +2971,7 @@ server <- function(input, output) {
   
   observeEvent(input$pressure_res, {
     if (input$sidebar == "pressure") P={
-      print("Input change")
+      
       print(input$pressure_dt)
       slider_vals = switchTimeRes(input$pressure_res)
       
@@ -2882,11 +3016,27 @@ server <- function(input, output) {
   ##### PRECIPITATION START #####
 
   precip_points <- reactive({
-    return(getPointFAA(input$precip_res))
+    if (input$precip_res == "mon"){
+      points = faa.monthly
+    }
+    else{
+      points = faa.quarterly
+    }
+    return(points)
   })
   
   precip_raster <- reactive({
-    return(getRasterFAA(input$precip_res))
+    if (input$precip_res == "mon"){
+      raster = faa.mon.raster
+      ### Super hacky thing to fix monthly FAA names to match master.raster.
+      n = nchar(names(raster))
+      names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
+    }
+    else{
+      raster = master.raster
+    }
+    
+    return(raster)
   }) 
   
   output$precip_map <- renderLeaflet({
@@ -2920,7 +3070,7 @@ server <- function(input, output) {
   
   observeEvent(input$precip_res, {
     if (input$sidebar == "precip") P={
-      print("Input change")
+      
       print(input$precip_dt)
       slider_vals = switchTimeRes(input$precip_res)
       
