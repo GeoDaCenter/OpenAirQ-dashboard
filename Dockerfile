@@ -15,7 +15,9 @@ RUN install2.r --error \
     plotly \
     data.table \
     raster \
-    scales
+    scales \
+    zoo \
+    ggthemes
     
 WORKDIR /home/shinyusr
 COPY ./ .
