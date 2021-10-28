@@ -20,9 +20,9 @@ library(ggthemes)
 ##### DATA LOADING START #####
 source("DashFunctions.R")
 
-monthly.raster <- stack("Data/Monthly_Raster.grd")
+monthly.raster <- stack("Data/EPA_Monthly.grd")
 master.raster <- stack("Data/Master_Raster.grd")
-faa.mon.raster <- stack("Data/faa_monthly_21.grd")
+faa.mon.raster <- stack("Data/Faa_Monthly.grd")
 # raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
 # names(master.raster) <- raster.names$x
@@ -2826,9 +2826,6 @@ server <- function(input, output) {
   temp_raster <- reactive({
     if (input$temp_res == "mon"){
       raster = faa.mon.raster
-      ### Super hacky thing to fix monthly FAA names to match master.raster.
-      n = nchar(names(raster))
-      names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
     }
     else{
       raster = master.raster
@@ -2928,9 +2925,6 @@ server <- function(input, output) {
   pressure_raster <- reactive({
     if (input$pressure_res == "mon"){
       raster = faa.mon.raster
-      ### Super hacky thing to fix monthly FAA names to match master.raster.
-      n = nchar(names(raster))
-      names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
     }
     else{
       raster = master.raster
@@ -3028,9 +3022,6 @@ server <- function(input, output) {
   precip_raster <- reactive({
     if (input$precip_res == "mon"){
       raster = faa.mon.raster
-      ### Super hacky thing to fix monthly FAA names to match master.raster.
-      n = nchar(names(raster))
-      names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
     }
     else{
       raster = master.raster
