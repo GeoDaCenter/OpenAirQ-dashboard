@@ -1,6 +1,6 @@
 ### Create Tab Page for Variables with Quarterly Data
-generateMonthlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                                 radselect = "ovr", mapheight = "70vh") 
+generateDynaTab <- function(tabname, variablename, variabledescription, sourcedescription,
+                                 radselect = "ovr", mapheight = "90vh") 
 {
   tabItem(tabName = tabname,
           fluidRow(
@@ -12,29 +12,42 @@ generateMonthlyTab <- function(tabname, variablename, variabledescription, sourc
                   tabPanel(title = "Source",
                            h4("Data Source"),
                            p(sourcedescription))),
-                radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
-                                  "Set View", 
-                                  c("21 Counties" = "lac", 
-                                    "Chicago" = "chi"))
-            ),
+                fluidRow(
+                  column(width = 5,
+                         radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
+                                           "Set View", 
+                                           c("21 Counties" = "lac", 
+                                             "Chicago" = "chi"))),
+                  column(width = 7,
+                         radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
+                                           c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
+                                           selected = radselect)),
+                  column(width = 2,
+                         radioButtons(paste(tabname, "res", sep = "_"), "Timestep:",
+                                      choices = c("Monthly" = "mon",
+                                                  "Quarterly" = "qtr"),
+                                      selected = "mon")),
+                  column(width = 10,
+                         sliderTextInput(paste(tabname, "dt", sep = "_"), "Select Month:",
+                                         choices = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="month"),
+                                                          "%Y/%m"),
+                                         selected = "2016/07", grid = TRUE))),
+                tabsetPanel(
+                  tabPanel(title = "Distribution",
+                           plotOutput(paste(tabname, "density", sep = "_"))),
+                  tabPanel(title = "Time Series",
+                           plotOutput(paste(tabname, "time", sep = "_"))),
+                  tabPanel(title = "Summary Table",
+                           uiOutput(paste(tabname, "sum", sep = "_"))))),
             box(width = 8,
-                sliderInput(paste(tabname, "dt", sep = "_"), "Select month:",
-                            min = strptime("2014/03/01","%Y/%m/%d"), 
-                            max = strptime("2018/12/31","%Y/%m/%d"),
-                            value = strptime("2016/07/01","%Y/%m/%d"),
-                            timeFormat = "%Y/%m",
-                            step = as.difftime(30, units = "days"),
-                            animate = animationOptions(interval = 2000)),
                 leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight),
-                radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
-                                  c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                  selected = radselect))
+                )
           ))
 }
 
 ### Create Tab Page for Variables with Quarterly Data
 generateQuarterlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                                  mapheight = "70vh") 
+                                  mapheight = "90vh") 
   {
   tabItem(tabName = tabname,
           fluidRow(
@@ -46,23 +59,26 @@ generateQuarterlyTab <- function(tabname, variablename, variabledescription, sou
                 tabPanel(title = "Source",
                   h4("Data Source"),
                   p(sourcedescription))),
-              radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
+              column(width = 5,
+                radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
                                               "Set View", 
                                               c("21 Counties" = "lac", 
-                                                "Chicago" = "chi"))
+                                                "Chicago" = "chi"))),
+              column(width = 7,
+                radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
+                                c("Overall" = "ovr", "Yearly" = "yr", "Quarterly" = "qtr"), 
+                                selected = "ovr")),
+              sliderInput(paste(tabname, "dt", sep = "_"), "Select quarter:",
+                          min = strptime("2014/01/01","%Y/%m/%d"), 
+                          max = strptime("2018/12/31","%Y/%m/%d"),
+                          value = strptime("2016/07/01","%Y/%m/%d"),
+                          timeFormat = "%Y/%m",
+                          step = as.difftime(92, units = "days"),
+                          animate = animationOptions(interval = 5000))
               ),
             box(width = 8,
-                sliderInput(paste(tabname, "dt", sep = "_"), "Select quarter:",
-                            min = strptime("2014/01/01","%Y/%m/%d"), 
-                            max = strptime("2018/12/31","%Y/%m/%d"),
-                            value = strptime("2016/07/01","%Y/%m/%d"),
-                            timeFormat = "%Y/%m",
-                            step = as.difftime(92, units = "days"),
-                            animate = animationOptions(interval = 5000)),
-                leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight),
-                radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
-                             c("Overall" = "ovr", "Yearly" = "yr", "Quarterly" = "qtr"), 
-                             selected = "ovr"))
+                leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight)
+               )
               ))
 }
 
@@ -97,7 +113,7 @@ generateOneTimeTab <- function(tabname, variablename, variabledescription, sourc
 ##### Date Slider Output to Raster Layer Name
 getLayerName <- function(in.date, variable, period = "qtr") {
   
-  in.date <- as.Date(in.date)
+  in.date <- as.Date(paste0(in.date, "/01"))
   
   var.month <- month(in.date)
   var.yr <- year(in.date)
@@ -417,4 +433,117 @@ getLabels <- function(date, dataframe, varname) {
 }
 
 
+switchTimeRes <- function(res){
+  
+  new_vals = list()
+  
+  if (res == "mon"){
+    new_vals[[1]] = "Select Month:"
+    new_vals[[2]] = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="month"),
+                          "%Y/%m")
+    new_vals[[3]] = c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon")
+  }
+  else if (res == "qtr"){
+    new_vals[[1]] = "Select Quarter:"
+    new_vals[[2]] = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="quarter"),
+                          "%Y/%m")
+    new_vals[[3]] = c("Overall" = "ovr", "Yearly" = "yr", "Quarterly" = "qtr")
+  }
+  
+  return(new_vals)
+}
 
+densityPlotLabels <- function(date, res){
+  date = paste0(date,"/01")
+  labels = vector()
+  if (res == "mon"){
+    labels[1] = "All Other Months"
+    labels[2] = format.Date(date, "%B %Y")
+  }
+  else {
+    labels[1] = "All Other Quarters"
+    labels[2] = paste0("Q", quarter(date), " ", year(date))
+  }
+  
+  return(labels)
+}
+
+
+getPointData <- function(res){
+  if (res == "mon"){
+    points = epa.monthly
+  }
+  else{
+    points = epa.quarterly
+  }
+  return(points)
+}
+
+getRasterData <- function(res){
+  if (res == "mon"){
+    raster = monthly.raster
+  }
+  else{
+    raster = master.raster
+  }
+  
+  return(raster)
+}
+
+
+getPointFAA <- function(res){
+  if (res == "mon"){
+    points = faa.monthly
+  }
+  else{
+    points = faa.quarterly
+  }
+  return(points)
+}
+
+getRasterFAA <- function(res){
+  if (res == "mon"){
+    raster = faa.mon.raster
+    ### Super hacky thing to fix monthly FAA names to match master.raster.
+    n = nchar(names(raster))
+    names(raster) = stri_sub_replace(names(raster), from = (n-3), to = (n-2), value="")
+  }
+  else{
+    raster = master.raster
+  }
+  
+  return(raster)
+}
+
+density_plot <- function(date, varname, res, points, xlab){
+  
+  this.name <- getLayerName(date, varname, period = res)
+  labels <- densityPlotLabels(date, res)
+  
+  full_points <- gather(st_drop_geometry(points[which(grepl(varname, names(points)))]))
+  print(this.name)
+  
+  ggplot(full_points) + geom_density(aes(value, fill = (key == this.name)), alpha = 0.6) + 
+    theme_tufte() + 
+    theme(legend.position = c(.87, .87)) + 
+    labs(y = "Density", x = paste0(varname, " (", xlab, ")"), fill = "") + 
+    scale_fill_manual(labels = labels, values = c("grey", "red")) 
+}
+
+
+
+boxplot_dist <- function(date, varname, res, points, ylab){
+  
+  this.name <- getLayerName(date, varname, period = res)
+  labels <- densityPlotLabels(date, res)
+  
+  full_points <- gather(st_drop_geometry(points[which(grepl(varname, names(points)))]))
+
+  
+  ggplot(full_points) + geom_boxplot(aes(y = value, x = (key == this.name), fill = (key == this.name)), alpha = 0.6) + 
+    theme_tufte() + 
+    theme(legend.position = "none") + 
+    labs(y = paste0(varname, " (", ylab, ")"), x = "", fill = "") +
+    scale_x_discrete(labels = labels) + 
+    scale_fill_manual(labels = labels, values = c("grey", "red"))
+}

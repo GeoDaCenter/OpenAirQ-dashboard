@@ -13,6 +13,8 @@ library(plotly)
 library(data.table)
 library(raster)
 library(scales)
+library(zoo)
+library(ggthemes)
 
 
 ##### DATA LOADING START #####
@@ -20,6 +22,7 @@ source("DashFunctions.R")
 
 monthly.raster <- stack("Data/Monthly_Raster.grd")
 master.raster <- stack("Data/Master_Raster.grd")
+faa.mon.raster <- stack("Data/faa_monthly_21.grd")
 # raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
 # names(master.raster) <- raster.names$x
@@ -705,32 +708,32 @@ ui <- dashboardPage(
 
     generateOneTimeTab(elevation.tabname, elevation.name, elevation.description, elevation.source),
 
-    generateMonthlyTab(pm25.tabname, pm25.name, pm25.description, pm25.source, radselect = "mon"),
+    generateDynaTab(pm25.tabname, pm25.name, pm25.description, pm25.source, radselect = "mon"),
 
-    generateQuarterlyTab(pm10.tabname, pm10.name, pm10.description, pm10.source),
+    generateDynaTab(pm10.tabname, pm10.name, pm10.description, pm10.source),
 
-    generateQuarterlyTab(co.tabname, co.name, co.description, co.source),
+    generateDynaTab(co.tabname, co.name, co.description, co.source),
 
-    generateQuarterlyTab(no2.tabname, no2.name, no2.description, no2.source),
+    generateDynaTab(no2.tabname, no2.name, no2.description, no2.source),
 
-    generateQuarterlyTab(o3.tabname, o3.name, o3.description, o3.source),
+    generateDynaTab(o3.tabname, o3.name, o3.description, o3.source),
 
-    generateQuarterlyTab(so2.tabname, so2.name, so2.description, so2.source),
+    generateDynaTab(so2.tabname, so2.name, so2.description, so2.source),
 
-    generateQuarterlyTab(pb.tabname, pb.name, pb.description, pb.source),
+    generateDynaTab(pb.tabname, pb.name, pb.description, pb.source),
 
     generateOneTimeTab(pe.tabname, pe.name, pe.description, pe.source, 
                        mapviewselected = "chi"),
 
     generateOneTimeTab(roads.tabname, roads.name, roads.description, roads.source),
 
-    generateQuarterlyTab(temp.tabname, temp.name, temp.description, temp.source),
+    generateDynaTab(temp.tabname, temp.name, temp.description, temp.source),
     
-    generateQuarterlyTab(pressure.tabname, pressure.name, pressure.description, pressure.source),
+    generateDynaTab(pressure.tabname, pressure.name, pressure.description, pressure.source),
 
     ##### PRECIPITATION START #####
     
-    generateQuarterlyTab(precip.tabname, precip.name, precip.description, precip.source),
+    generateDynaTab(precip.tabname, precip.name, precip.description, precip.source),
     
     ##### PRECIPITATION END #####
     
@@ -1628,7 +1631,7 @@ server <- function(input, output) {
   })
   
   ##### NN END #####
-
+  
 
   output$aod_map <- renderLeaflet({
 
@@ -1900,7 +1903,18 @@ server <- function(input, output) {
     }
   })
   
-###### ISAAC SEARCH ####
+###### EPA Variables START #####
+  
+###### PM2.5 START #####
+  
+  pm25_points <- reactive({
+    return(getPointData(input$pm25_res))
+  })
+  
+  pm25_raster <- reactive({
+    return(getRasterData(input$pm25_res))
+  })
+  
   output$pm25_map <- renderLeaflet({
     
     this.pm25.name <- "PM25_7_16"
@@ -1908,43 +1922,64 @@ server <- function(input, output) {
     in.pal <- "mon"
     
     points = epa.monthly[[this.pm25.name]]
+    
     pt.bounds = c(min(points, na.rm=TRUE), max(points, na.rm=TRUE))
 
     pm25.pal <- palFromLayer(this.pm25.name, 
                              style = in.pal, 
                              raster = monthly.raster,
                              pt.bounds = pt.bounds)
-
-
+    
     dashMap(this.pm25.name, pm25.pal,
             raster = monthly.raster, area = large.area,
             layerId = large.area$FIPS, EPApoints = epa.monthly,
             VarName = "PM25",
             units = "(ug/m3)")
-
-
     
+  })
+  
+  
+  output$pm25_density <- renderPlot({
+    pm25_density = density_plot(input$pm25_dt, "PM25", input$pm25_res, pm25_points(), "ug/m3")
+    pm25_density
+  })
+  
+  output$pm25_time <- renderPlot({
     
   })
 
   observe({
     if (input$sidebar == "pm25") {
+      
     in.date <- input$pm25_dt
-    this.pm25.name <- getLayerName(in.date, "PM25", period = "mon")
-    
+    this.pm25.name <- getLayerName(in.date, "PM25", period = input$pm25_res)
     in.pal <- input$pm25_rad
-    
-    points = epa.monthly[[this.pm25.name]]
+
+    points = pm25_points()[[this.pm25.name]]
     pt.bounds = c(min(points, na.rm=TRUE), max(points, na.rm=TRUE))
-    
-    
+  
     pm25.pal <- palFromLayer(this.pm25.name, 
                              style = in.pal, 
-                             raster = monthly.raster,
+                             raster = pm25_raster(),
                              pt.bounds = pt.bounds)
+    
+    sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = pm25_raster(), units = "(ug/m3)", EPApoints = pm25_points())
+    }
+  })
+  
+  observeEvent(input$pm25_res, {
+    if (input$sidebar == "pm25") P={
+      print("Input change")
+      print(input$pm25_dt)
+      slider_vals = switchTimeRes(input$pm25_res)
 
-
-    sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = monthly.raster, units = "(ug/m3)", EPApoints = epa.monthly)
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                        inputId = "pm25_dt", label = slider_vals[1],
+                        selected = "2016/07",
+                        choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "pm25_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -1974,32 +2009,65 @@ server <- function(input, output) {
       }
     }
   })
-
+  ###### PM2.5 END #####
+  
+  ###### PM10 START #####
+  
+  pm10_points <- reactive({
+    return(getPointData(input$pm10_res))
+  })
+  
+  pm10_raster <- reactive({
+    return(getRasterData(input$pm10_res))
+  })
+  
+  
   output$pm10_map <- renderLeaflet({
 
     this.pm10.name <- "PM10_3_16"
 
     in.pal <- "ovr"
 
-    pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = master.raster)
+    pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = monthly.raster)
 
-    dashMap(this.pm10.name, pm10.pal, raster = master.raster, 
+    dashMap(this.pm10.name, pm10.pal, raster = monthly.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.quarterly, VarName = "PM10", 
+            EPApoints = epa.monthly, VarName = "PM10", 
             units = "(ug/m3)")
 
+  })
+  
+  output$pm10_density <- renderPlot({
+    pm10_density = density_plot(input$pm10_dt, "PM10", input$pm10_res, pm10_points(), "ug/m3")
+    pm10_density
   })
 
   observe({
     if (input$sidebar == "pm10") {
     in.date <- input$pm10_dt
-    this.pm10.name <- getLayerName(in.date, "PM10")
+    this.pm10.name <- getLayerName(in.date, "PM10", input$pm10_res)
 
     in.pal <- input$pm10_rad
 
-    pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = master.raster)
+    pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = pm10_raster())
 
-    sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = master.raster, units = "(ug/m3)", EPApoints = epa.quarterly)
+    sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = pm10_raster(), units = "(ug/m3)", EPApoints = pm10_points())
+    }
+  })
+  
+  observeEvent(input$pm10_res, {
+    if (input$sidebar == "pm10") P={
+      print("Input change")
+      print(input$pm10_dt)
+      slider_vals = switchTimeRes(input$pm10_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "pm10_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "pm10_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -2029,6 +2097,18 @@ server <- function(input, output) {
       }
     }
   })
+  
+  ###### PM10 END #####
+  
+  ###### CO START #####
+  
+  co_points <- reactive({
+    return(getPointData(input$co_res))
+  })
+  
+  co_raster <- reactive({
+    return(getRasterData(input$co_res))
+  })  
 
   output$co_map <- renderLeaflet({
 
@@ -2036,24 +2116,45 @@ server <- function(input, output) {
 
     in.pal <- "ovr"
 
-    co.pal <- palFromLayer(this.co.name, style = in.pal, raster = master.raster)
+    co.pal <- palFromLayer(this.co.name, style = in.pal, raster = monthly.raster)
 
-    dashMap(this.co.name, co.pal, raster = master.raster, 
+    dashMap(this.co.name, co.pal, raster = monthly.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.quarterly, VarName = "CO")
+            EPApoints = epa.monthly, VarName = "CO")
 
+  })
+  
+  output$co_density <- renderPlot({
+    co_density = boxplot_dist(input$co_dt, "CO", input$co_res, co_points(), "ppm")
+    co_density
   })
 
   observe({
     if (input$sidebar == "co") {
       in.date <- input$co_dt
-      this.co.name <- getLayerName(in.date, "CO")
+      this.co.name <- getLayerName(in.date, "CO", input$co_res)
 
       in.pal <- input$co_rad
 
-      co.pal <- palFromLayer(this.co.name, style = in.pal, raster = master.raster)
+      co.pal <- palFromLayer(this.co.name, style = in.pal, raster = co_raster())
 
-      sliderProxy("co_map", this.co.name, co.pal, raster = master.raster, EPApoints = epa.quarterly)
+      sliderProxy("co_map", this.co.name, co.pal, raster = co_raster(), units = "(ppm)", EPApoints = co_points())
+    }
+  })
+  
+  observeEvent(input$co_res, {
+    if (input$sidebar == "co") P={
+      print("Input change")
+      print(input$co_dt)
+      slider_vals = switchTimeRes(input$co_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "co_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "co_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -2084,6 +2185,18 @@ server <- function(input, output) {
     }
   })
 
+  ###### CO END #####
+  
+  ###### NO2 START #####
+  
+  no2_points <- reactive({
+    return(getPointData(input$no2_res))
+  })
+  
+  no2_raster <- reactive({
+    return(getRasterData(input$no2_res))
+  })  
+  
   output$no2_map <- renderLeaflet({
 
     this.no2.name <- "NO2_3_16"
@@ -2097,17 +2210,38 @@ server <- function(input, output) {
             EPApoints = epa.quarterly, VarName = "NO2")
 
   })
+  
+  output$no2_density <- renderPlot({
+    no2_density = density_plot(input$no2_dt, "NO2", input$no2_res, no2_points(), "ppb")
+    no2_density
+  })
 
   observe({
     if(input$sidebar == "no2") {
     in.date <- input$no2_dt
-    this.no2.name <- getLayerName(in.date, "NO2")
+    this.no2.name <- getLayerName(in.date, "NO2", input$no2_res)
 
     in.pal <- input$no2_rad
 
-    no2.pal <- palFromLayer(this.no2.name, style = in.pal, raster = master.raster)
+    no2.pal <- palFromLayer(this.no2.name, style = in.pal, raster = no2_raster())
 
-    sliderProxy("no2_map", this.no2.name, no2.pal, raster = master.raster, EPApoints = epa.quarterly)
+    sliderProxy("no2_map", this.no2.name, no2.pal, raster = no2_raster(), units = "(ppb)", EPApoints = no2_points())
+    }
+  })
+  
+  observeEvent(input$no2_res, {
+    if (input$sidebar == "no2") P={
+      print("Input change")
+      print(input$no2_dt)
+      slider_vals = switchTimeRes(input$no2_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "no2_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "no2_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -2137,8 +2271,20 @@ server <- function(input, output) {
       }
     }
   })
+  
+  ###### NO2 END #####
+  
+  ###### O3 START #####
 
 
+  o3_points <- reactive({
+    return(getPointData(input$o3_res))
+  })
+  
+  o3_raster <- reactive({
+    return(getRasterData(input$o3_res))
+  }) 
+  
   output$o3_map <- renderLeaflet({
 
     this.o3.name <- "Ozone_3_16"
@@ -2151,17 +2297,38 @@ server <- function(input, output) {
             EPApoints = epa.quarterly, VarName = "Ozone")
 
   })
+  
+  output$o3_density <- renderPlot({
+    o3_density = density_plot(input$o3_dt, "Ozone", input$o3_res, o3_points(), "ppm")
+    o3_density
+  })
 
   observe({
     if (input$sidebar == "o3") {
     in.date <- input$o3_dt
-    this.o3.name <- getLayerName(in.date, "Ozone")
+    this.o3.name <- getLayerName(in.date, "Ozone", input$o3_res)
 
     in.pal <- input$o3_rad
 
-    o3.pal <- palFromLayer(this.o3.name, style = in.pal, raster = master.raster)
+    o3.pal <- palFromLayer(this.o3.name, style = in.pal, raster = o3_raster())
 
-    sliderProxy("o3_map", this.o3.name, o3.pal, raster = master.raster, EPApoints = epa.quarterly)
+    sliderProxy("o3_map", this.o3.name, o3.pal, raster = o3_raster(), units = "(ppm)", EPApoints = o3_points())
+    }
+  })
+  
+  observeEvent(input$o3_res, {
+    if (input$sidebar == "o3") P={
+      print("Input change")
+      print(input$o3_dt)
+      slider_vals = switchTimeRes(input$o3_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "o3_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "o3_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -2191,6 +2358,18 @@ server <- function(input, output) {
       }
     }
   })
+  
+  ###### O3 END #####
+  
+  ###### SO2 START #####
+  
+  so2_points <- reactive({
+    return(getPointData(input$so2_res))
+  })
+  
+  so2_raster <- reactive({
+    return(getRasterData(input$so2_res))
+  }) 
 
   output$so2_map <- renderLeaflet({
 
@@ -2205,19 +2384,40 @@ server <- function(input, output) {
             EPApoints = epa.quarterly, VarName = "SO2")
 
   })
+  
+  output$so2_density <- renderPlot({
+    so2_density = density_plot(input$so2_dt, "SO2", input$so2_res, so2_points(), "ppb")
+    so2_density
+  })
 
   observe({
     if(input$sidebar == "so2") {
       in.date <- input$so2_dt
-      this.so2.name <- getLayerName(in.date, "SO2")
+      this.so2.name <- getLayerName(in.date, "SO2", input$so2_res)
 
       in.pal <- input$so2_rad
 
-      so2.pal <- palFromLayer(this.so2.name, style = in.pal, raster = master.raster)
+      so2.pal <- palFromLayer(this.so2.name, style = in.pal, raster = so2_raster())
 
-      sliderProxy("so2_map", this.so2.name, so2.pal, raster = master.raster, EPApoints = epa.quarterly)
+      sliderProxy("so2_map", this.so2.name, so2.pal, raster = so2_raster(), units = "(ppb)",EPApoints = so2_points())
     }
 
+  })
+  
+  observeEvent(input$so2_res, {
+    if (input$sidebar == "so2") P={
+      print("Input change")
+      print(input$so2_dt)
+      slider_vals = switchTimeRes(input$so2_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "so2_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "so2_rad",
+                              choices = slider_vals[[3]])
+    }
   })
 
   observeEvent(input$so2_map_shape_click, {
@@ -2247,6 +2447,19 @@ server <- function(input, output) {
     }
   })
   
+  ###### SO2 END #####
+  
+  ###### PB START #####
+  
+  pb_points <- reactive({
+    return(getPointData(input$pb_res))
+  })
+  
+  pb_raster <- reactive({
+    return(getRasterData(input$pb_res))
+  }) 
+  
+  
   output$pb_map <- renderLeaflet({
 
     this.pb.name <- "Lead_3_16"
@@ -2260,19 +2473,40 @@ server <- function(input, output) {
             EPApoints = epa.quarterly, VarName = "Lead")
 
   })
+  
+  output$pb_density <- renderPlot({
+    pb_density = density_plot(input$pb_dt, "Lead", input$pb_res, pb_points(), "ug/m3")
+    pb_density
+  })
 
   observe({
     if(input$sidebar == "pb") {
 
       in.date <- input$pb_dt
-      this.pb.name <- getLayerName(in.date, "Lead")
+      this.pb.name <- getLayerName(in.date, "Lead", input$pb_res)
 
       in.pal <- input$pb_rad
 
-      pb.pal <- palFromLayer(this.pb.name, style = in.pal, raster = master.raster)
+      pb.pal <- palFromLayer(this.pb.name, style = in.pal, raster = pb_raster())
 
-      sliderProxy("pb_map", this.pb.name, pb.pal, raster = master.raster, EPApoints = epa.quarterly)
+      sliderProxy("pb_map", this.pb.name, pb.pal, raster = pb_raster(), units = "(ug/m3)", EPApoints = pb_points())
 
+    }
+  })
+  
+  observeEvent(input$pb_res, {
+    if (input$sidebar == "pb") P={
+      print("Input change")
+      print(input$pb_dt)
+      slider_vals = switchTimeRes(input$pb_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "pb_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "pb_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -2302,6 +2536,11 @@ server <- function(input, output) {
       }
     }
   })
+
+  ###### PB END #####
+  
+  
+  ###### EPA Variables END #####  
 
   output$pe_map <- renderLeaflet({
 
@@ -2470,6 +2709,17 @@ server <- function(input, output) {
   })
   
 
+  ###### FAA START #####
+  
+  temp_points <- reactive({
+    return(getPointFAA(input$temp_res))
+  })
+  
+  temp_raster <- reactive({
+    return(getRasterFAA(input$temp_res))
+  }) 
+  
+  
   output$temp_map <- renderLeaflet({
     this.temp.name <- "Temp_3_16"
 
@@ -2481,17 +2731,41 @@ server <- function(input, output) {
             area = large.area, layerId = large.area$FIPS,
             EPApoints = faa.quarterly, VarName = "Temp", units = "(\u00B0F)")
   })
+  
+  
+  output$temp_density <- renderPlot({
+    temp_density = density_plot(input$temp_dt, "Temp", input$temp_res, temp_points(), "\u00B0F")
+    temp_density
+  })
+  
 
   observe({
     if(input$sidebar == "temp") {
       in.date <- input$temp_dt
-      this.temp.name <- getLayerName(in.date, "Temp")
+      this.temp.name <- getLayerName(in.date, "Temp", input$temp_res)
+      print(this.temp.name)
 
       in.pal <- input$temp_rad
 
-      temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = master.raster)
+      temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = temp_raster())
 
-      sliderProxy("temp_map", this.temp.name, temp.pal, raster = master.raster, units = "(\u00B0F)", EPApoints = faa.quarterly)
+      sliderProxy("temp_map", this.temp.name, temp.pal, raster = temp_raster(), units = "(\u00B0F)", EPApoints = temp_points())
+    }
+  })
+  
+  observeEvent(input$temp_res, {
+    if (input$sidebar == "temp") P={
+      print("Input change")
+      print(input$temp_dt)
+      slider_vals = switchTimeRes(input$temp_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "temp_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "temp_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
@@ -2522,6 +2796,15 @@ server <- function(input, output) {
     }
   })
   
+  
+  pressure_points <- reactive({
+    return(getPointFAA(input$pressure_res))
+  })
+  
+  pressure_raster <- reactive({
+    return(getRasterFAA(input$pressure_res))
+  }) 
+  
   output$pressure_map <- renderLeaflet({
     this.pressure.name <- "Pressure_3_16"
     
@@ -2534,18 +2817,40 @@ server <- function(input, output) {
             EPApoints = faa.quarterly, VarName = "Pressure", units = "(mbar)")
   })
   
+  output$pressure_density <- renderPlot({
+    pressure_density = density_plot(input$pressure_dt, "Pressure", input$pressure_res, pressure_points(), "mbar")
+    pressure_density
+  })
+  
   observe({
     if(input$sidebar == "pressure") {
       in.date <- input$pressure_dt
-      this.pressure.name <- getLayerName(in.date, "Pressure")
+      this.pressure.name <- getLayerName(in.date, "Pressure", input$pressure_res)
       
       in.pal <- input$pressure_rad
       
-      pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = master.raster)
+      pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = pressure_raster())
       
-      sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = master.raster, units = "(mbar)", EPApoints = faa.quarterly)
+      sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = pressure_raster(), units = "(mbar)", EPApoints = pressure_points())
     }
   })
+  
+  observeEvent(input$pressure_res, {
+    if (input$sidebar == "pressure") P={
+      print("Input change")
+      print(input$pressure_dt)
+      slider_vals = switchTimeRes(input$pressure_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "pressure_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "pressure_rad",
+                              choices = slider_vals[[3]])
+    }
+  })
+  
   
   observeEvent(input$pressure_map_shape_click, {
     if(input$sidebar == "pressure") { #Optimize Dashboard speed by not observing outside of tab
@@ -2576,7 +2881,14 @@ server <- function(input, output) {
 
   ##### PRECIPITATION START #####
 
-  ##### ADD IN PRECIP DATA WHEN IT"S AVAILABLE
+  precip_points <- reactive({
+    return(getPointFAA(input$precip_res))
+  })
+  
+  precip_raster <- reactive({
+    return(getRasterFAA(input$precip_res))
+  }) 
+  
   output$precip_map <- renderLeaflet({
   
     this.precip.name <- "Precip_3_16"
@@ -2587,17 +2899,38 @@ server <- function(input, output) {
     precip.map <- dashMap(this.precip.name, precip.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS,
                           EPApoints = faa.quarterly, VarName = "Precip", units = "(inches)")
   })
+  
+  output$precip_density <- renderPlot({
+    precip_density = density_plot(input$precip_dt, "Precip", input$precip_res, precip_points(), "inches")
+    precip_density
+  })
 
   observe({
     if(input$sidebar == "precip") {
       in.date <- input$precip_dt
-      this.precip.name <- getLayerName(in.date, "Precip")
+      this.precip.name <- getLayerName(in.date, "Precip", input$precip_res)
       
       in.pal <- input$precip_rad
       
-      precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = master.raster)
+      precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = precip_raster())
       
-      sliderProxy("precip_map", this.precip.name, precip.pal, raster = master.raster, units = "(inches)", EPApoints = faa.quarterly)
+      sliderProxy("precip_map", this.precip.name, precip.pal, raster = precip_raster(), units = "(inches)", EPApoints = precip_points())
+    }
+  })
+  
+  observeEvent(input$precip_res, {
+    if (input$sidebar == "precip") P={
+      print("Input change")
+      print(input$precip_dt)
+      slider_vals = switchTimeRes(input$precip_res)
+      
+      updateSliderTextInput(session = getDefaultReactiveDomain(),
+                            inputId = "precip_dt", label = slider_vals[1],
+                            selected = "2016/07",
+                            choices = slider_vals[[2]])
+      updateRadioGroupButtons(session = getDefaultReactiveDomain(),
+                              inputId = "precip_rad",
+                              choices = slider_vals[[3]])
     }
   })
   
