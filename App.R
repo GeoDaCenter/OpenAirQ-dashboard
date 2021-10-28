@@ -22,7 +22,7 @@ source("DashFunctions.R")
 
 monthly.raster <- stack("Data/EPA_Monthly.grd")
 master.raster <- stack("Data/Master_Raster.grd")
-faa.mon.raster <- stack("Data/Faa_Monthly.grd")
+faa.mon.raster <- stack("Data/FAA_Monthly.grd")
 # raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
 # names(master.raster) <- raster.names$x
