@@ -31,14 +31,9 @@ generateDynaTab <- function(tabname, variablename, variabledescription, sourcede
                          sliderTextInput(paste(tabname, "dt", sep = "_"), "Select Month:",
                                          choices = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="month"),
                                                           "%Y/%m"),
-                                         selected = "2016/07", grid = TRUE))),
-                tabsetPanel(
-                  tabPanel(title = "Distribution",
-                           plotOutput(paste(tabname, "density", sep = "_"))),
-                  tabPanel(title = "Time Series",
-                           plotOutput(paste(tabname, "time", sep = "_"))),
-                  tabPanel(title = "Summary Table",
-                           uiOutput(paste(tabname, "sum", sep = "_"))))),
+                                         selected = "2016/07", grid = FALSE))),
+                  plotOutput(paste(tabname, "time", sep = "_")),
+                  plotOutput(paste(tabname, "density", sep = "_"))),
             box(width = 8,
                 leafletOutput(paste(tabname, "map", sep = "_"),height = mapheight),
                 )
@@ -475,12 +470,11 @@ density_plot <- function(date, varname, res, points, xlab){
   labels <- densityPlotLabels(date, res)
   
   full_points <- gather(st_drop_geometry(points[which(grepl(varname, names(points)))]))
-  print(this.name)
   
   ggplot(full_points) + geom_density(aes(value, fill = (key == this.name)), alpha = 0.6) + 
-    theme_tufte() + 
+    theme_tufte(base_size = 15) + 
     theme(legend.position = c(.87, .87)) + 
-    labs(y = "Density", x = paste0(varname, " (", xlab, ")"), fill = "") + 
+    labs(y = "Density", x = paste0(varname, " (", xlab, ")"), fill = "", title = "Distribution Comparison") + 
     scale_fill_manual(labels = labels, values = c("grey", "red")) 
 }
 
@@ -495,9 +489,35 @@ boxplot_dist <- function(date, varname, res, points, ylab){
 
   
   ggplot(full_points) + geom_boxplot(aes(y = value, x = (key == this.name), fill = (key == this.name)), alpha = 0.6) + 
-    theme_tufte() + 
+    theme_tufte(base_size = 15) + 
     theme(legend.position = "none") + 
-    labs(y = paste0(varname, " (", ylab, ")"), x = "", fill = "") +
+    labs(y = paste0(varname, " (", ylab, ")"), x = "", fill = "", title = "Distribution Comparison") +
     scale_x_discrete(labels = labels) + 
     scale_fill_manual(labels = labels, values = c("grey", "red"))
+}
+
+
+time_plot <- function(in.date, varname, res, points, ylab){
+  
+  full_points <- st_drop_geometry(points[which(grepl(varname, names(points)))])
+  full_points = cbind(full_points, "Location" = 1:nrow(full_points))
+  
+  full_points = na.omit(gather(full_points, "date", "value", -Location))
+  
+  
+  full_points$date = str_remove(full_points$date, paste0(varname, "_"))
+  
+  if (res == "mon"){
+    full_points$date = as.yearmon(full_points$date, "%m_%y")
+    in.date = as.yearmon(in.date, "%Y/%m")
+  }
+  else {
+    full_points$date = as.yearqtr(full_points$date, "%q_%y")
+    in.date = as.yearqtr(in.date, "%Y/%m")
+  }
+  
+  ggplot(full_points) + geom_line(aes(x = date, y = value, group = Location), alpha = 0.1) +
+    theme_tufte(base_size = 15) + 
+    labs(y = ylab, x = "Date", title = "Sensor Readings Over Time") + 
+    geom_vline(xintercept = in.date, color = "red")
 }

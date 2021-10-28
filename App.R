@@ -22,7 +22,7 @@ source("DashFunctions.R")
 
 monthly.raster <- stack("Data/EPA_Monthly.grd")
 master.raster <- stack("Data/Master_Raster.grd")
-faa.mon.raster <- stack("Data/Faa_Monthly.grd")
+faa.mon.raster <- stack("Data/FAA_Monthly.grd")
 # raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
 # names(master.raster) <- raster.names$x
@@ -1960,7 +1960,7 @@ server <- function(input, output) {
   })
   
   output$pm25_time <- renderPlot({
-    
+    time_plot(input$pm25_dt, "PM25", input$pm25_res, pm25_points(), "ug/m3")
   })
 
   observe({
@@ -1984,8 +1984,6 @@ server <- function(input, output) {
   
   observeEvent(input$pm25_res, {
     if (input$sidebar == "pm25") P={
-      
-      print(input$pm25_dt)
       slider_vals = switchTimeRes(input$pm25_res)
 
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2071,6 +2069,10 @@ server <- function(input, output) {
     pm10_density = density_plot(input$pm10_dt, "PM10", input$pm10_res, pm10_points(), "ug/m3")
     pm10_density
   })
+  
+  output$pm10_time <- renderPlot({
+    time_plot(input$pm10_dt, "PM10", input$pm10_res, pm10_points(), "ug/m3")
+  })
 
   observe({
     if (input$sidebar == "pm10") {
@@ -2088,7 +2090,6 @@ server <- function(input, output) {
   observeEvent(input$pm10_res, {
     if (input$sidebar == "pm10") P={
       
-      print(input$pm10_dt)
       slider_vals = switchTimeRes(input$pm10_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2173,6 +2174,11 @@ server <- function(input, output) {
     co_density = boxplot_dist(input$co_dt, "CO", input$co_res, co_points(), "ppm")
     co_density
   })
+  
+  output$co_time <- renderPlot({
+    co_time = time_plot(input$co_dt, "CO", input$co_res, co_points(), "ppm")
+    co_time
+  })
 
   observe({
     if (input$sidebar == "co") {
@@ -2190,7 +2196,6 @@ server <- function(input, output) {
   observeEvent(input$co_res, {
     if (input$sidebar == "co") P={
       
-      print(input$co_dt)
       slider_vals = switchTimeRes(input$co_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2276,6 +2281,11 @@ server <- function(input, output) {
     no2_density
   })
 
+  output$no2_time <- renderPlot({
+    no2_time = time_plot(input$no2_dt, "NO2", input$no2_res, no2_points(), "ppb")
+    no2_time
+  })
+  
   observe({
     if(input$sidebar == "no2") {
     in.date <- input$no2_dt
@@ -2292,7 +2302,6 @@ server <- function(input, output) {
   observeEvent(input$no2_res, {
     if (input$sidebar == "no2") P={
       
-      print(input$no2_dt)
       slider_vals = switchTimeRes(input$no2_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2376,6 +2385,11 @@ server <- function(input, output) {
     o3_density = density_plot(input$o3_dt, "Ozone", input$o3_res, o3_points(), "ppm")
     o3_density
   })
+  
+  output$o3_time <- renderPlot({
+    o3_time = time_plot(input$o3_dt, "Ozone", input$o3_res, o3_points(), "ppm")
+    o3_time
+  })
 
   observe({
     if (input$sidebar == "o3") {
@@ -2393,7 +2407,6 @@ server <- function(input, output) {
   observeEvent(input$o3_res, {
     if (input$sidebar == "o3") P={
       
-      print(input$o3_dt)
       slider_vals = switchTimeRes(input$o3_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2477,6 +2490,11 @@ server <- function(input, output) {
     so2_density = density_plot(input$so2_dt, "SO2", input$so2_res, so2_points(), "ppb")
     so2_density
   })
+  
+  output$so2_time <- renderPlot({
+    so2_time = time_plot(input$so2_dt, "SO2", input$so2_res, so2_points(), "ppb")
+    so2_time
+  })
 
   observe({
     if(input$sidebar == "so2") {
@@ -2495,7 +2513,6 @@ server <- function(input, output) {
   observeEvent(input$so2_res, {
     if (input$sidebar == "so2") P={
       
-      print(input$so2_dt)
       slider_vals = switchTimeRes(input$so2_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2580,6 +2597,11 @@ server <- function(input, output) {
     pb_density = density_plot(input$pb_dt, "Lead", input$pb_res, pb_points(), "ug/m3")
     pb_density
   })
+  
+  output$pb_time <- renderPlot({
+    pb_time = time_plot(input$pb_dt, "Lead", input$pb_res, pb_points(), "ug/m3")
+    pb_time
+  })
 
   observe({
     if(input$sidebar == "pb") {
@@ -2599,7 +2621,6 @@ server <- function(input, output) {
   observeEvent(input$pb_res, {
     if (input$sidebar == "pb") P={
       
-      print(input$pb_dt)
       slider_vals = switchTimeRes(input$pb_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2853,12 +2874,16 @@ server <- function(input, output) {
     temp_density
   })
   
+  output$temp_time <- renderPlot({
+    temp_time = time_plot(input$temp_dt, "Temp", input$temp_res, temp_points(), "\u00B0F")
+    temp_time
+  })
+  
 
   observe({
     if(input$sidebar == "temp") {
       in.date <- input$temp_dt
       this.temp.name <- getLayerName(in.date, "Temp", input$temp_res)
-      print(this.temp.name)
 
       in.pal <- input$temp_rad
 
@@ -2871,7 +2896,6 @@ server <- function(input, output) {
   observeEvent(input$temp_res, {
     if (input$sidebar == "temp") P={
       
-      print(input$temp_dt)
       slider_vals = switchTimeRes(input$temp_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -2950,6 +2974,11 @@ server <- function(input, output) {
     pressure_density
   })
   
+  output$pressure_time <- renderPlot({
+    pressure_time = time_plot(input$pressure_dt, "Pressure", input$pressure_res, pressure_points(), "mbar")
+    pressure_time
+  })
+  
   observe({
     if(input$sidebar == "pressure") {
       in.date <- input$pressure_dt
@@ -2966,7 +2995,6 @@ server <- function(input, output) {
   observeEvent(input$pressure_res, {
     if (input$sidebar == "pressure") P={
       
-      print(input$pressure_dt)
       slider_vals = switchTimeRes(input$pressure_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
@@ -3045,6 +3073,11 @@ server <- function(input, output) {
     precip_density = density_plot(input$precip_dt, "Precip", input$precip_res, precip_points(), "inches")
     precip_density
   })
+  
+  output$precip_time <- renderPlot({
+    precip_time = time_plot(input$precip_dt, "Precip", input$precip_res, precip_points(), "inches")
+    precip_time
+  })
 
   observe({
     if(input$sidebar == "precip") {
@@ -3061,8 +3094,7 @@ server <- function(input, output) {
   
   observeEvent(input$precip_res, {
     if (input$sidebar == "precip") P={
-      
-      print(input$precip_dt)
+
       slider_vals = switchTimeRes(input$precip_res)
       
       updateSliderTextInput(session = getDefaultReactiveDomain(),
