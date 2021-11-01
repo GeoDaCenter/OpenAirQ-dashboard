@@ -1,6 +1,7 @@
 library(tidyr)
 library(dplyr)
 library(RSocrata)
+library(geojsonio)
 
 #setwd('E:/Spatial DS RA/OpenAirQ-dashboard/Data_Wrangling/')
 
@@ -13,9 +14,11 @@ covid_raw <- covid_chicago %>%
   rename(Date = week_start) %>%
   filter(Date >= '2020-12-01') %>%
   arrange(desc(Date)) %>%
-  dplyr::select(zip_code, Date, case_rate_weekly) %>%
+  dplyr::select(zip_code, Date, case_rate_weekly) %>% 
+  mutate(case_rate_weekly = as.numeric(case_rate_weekly)) %>% 
   pivot_wider(names_from = 'Date', values_from = 'case_rate_weekly') %>%
-  rename(zip = zip_code)
+  rename(zip = zip_code) %>% 
+  filter(zipcode != "Unknown")
 
 zipcode <- covid_raw$zip
 
@@ -36,3 +39,14 @@ covid_means <- covid %>%
   arrange(desc(time))
 
 write.csv(covid_means, file = "../Data/Covid/covid_means.csv")
+
+# update the geojson file 
+
+covid_geo <- geojson_read("../Data/COVID/historical/covid.geojson", 
+                          what = "sp")
+
+covid_geo@data <- covid_geo@data %>% 
+  select(all_of(names(covid_geo@data)[1:5])) %>% 
+  right_join(., covid, by = c("zip" = "zipcode"))
+
+geojson_write(covid_geo, file = "../Data/COVID/covid.geojson")
