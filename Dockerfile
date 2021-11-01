@@ -19,7 +19,9 @@ RUN install2.r --error \
     zoo \
     ggthemes \
     RSocrata \
-    plyr
+    plyr \
+    covr \
+    rex
     
 WORKDIR /home/shinyusr
 COPY ./ .
