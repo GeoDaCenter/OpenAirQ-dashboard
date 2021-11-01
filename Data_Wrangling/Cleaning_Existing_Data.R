@@ -5,8 +5,8 @@ library(jsonlite)
 library(stringr)
 library(lubridate)
 
-setwd("E:/Spatial DS RA/OpenAirQ-dashboard/Data")
-
+setwd("E:/Spatial DS RA/OpenAirQ-dashboard/Data/PM25_Weekly/Historical/")
+select <- dplyr::select
 #---read and process newly acquired data since march
 past_files <- list.files(pattern="*.json")
 
@@ -28,9 +28,11 @@ process <- function(f_name){
   return(data_agg)
 } 
 
-
 past_combined <- map_dfr(.x=past_files, .f = ~process(.x))
 
+past_combined <- 
+  past_combined %>% 
+  filter(date != "20211028") 
 # ------separate into different datasets
 # pm25
 pm_wide <- past_combined %>% 
@@ -41,14 +43,6 @@ pm_wide <- past_combined %>%
               values_from = avg_pm25, 
               names_prefix = "PM25_")
 
-pm_weekly <- past_combined %>% 
-  ungroup() %>% 
-  select(date, avg_pm25) %>%
-  mutate(week = week(ymd(date))) %>% 
-  group_by(week) %>% 
-  summarize(PM25 = mean(avg_pm25, na.rm = T)) %>% 
-  select(PM25)
-
 # aqi
 aqi_wide <- past_combined %>% 
   arrange(desc(date)) %>% 
@@ -58,49 +52,61 @@ aqi_wide <- past_combined %>%
               values_from = avg_aqi, 
               names_prefix = "AQI_")
 
-aqi_weekly <- past_combined %>% 
-  ungroup() %>% 
+# weekly data
+pm_weekly <- past_combined %>%
+  ungroup() %>%
+  select(date, avg_pm25) %>%
+  mutate(week = week(ymd(date))) %>%
+  group_by(week) %>%
+  summarize(PM25 = mean(avg_pm25, na.rm = T)) %>%
+  select(PM25)
+
+
+aqi_weekly <- past_combined %>%
+  ungroup() %>%
   select(date, avg_aqi) %>%
-  mutate(week = week(ymd(date))) %>% 
-  group_by(week) %>% 
-  summarize(AQI = mean(avg_aqi, na.rm = T)) %>% 
+  mutate(week = week(ymd(date))) %>%
+  group_by(week) %>%
+  summarize(AQI = mean(avg_aqi, na.rm = T)) %>%
   select(AQI)
 
 # merge with previous data
-path_to_data <- "PM25_Weekly/"
 
 # pm25: combine weekly data
-pm_weekly_old <- read.csv(paste0(path_to_data, "pm25_means.csv"))
+pm_weekly_old <- read.csv("pm25_means.csv")
 pm_weekly_combo <- rbind(pm_weekly, pm_weekly_old)
-write.csv(pm_weekly_combo, 
-          file = paste0(path_to_data, "pm25_means.csv"))
+write.csv(pm_weekly_combo,
+          file = "../pm25_means.csv")
+
 # aqi: combine weekly data
-aqi_weekly_old <- read.csv(paste0(path_to_data, "aqi_means.csv"))
+aqi_weekly_old <- read.csv("aqi_means.csv")
 
 aqi_weekly_combo <- rbind(aqi_weekly, aqi_weekly_old)
-write.csv(aqi_weekly_combo, 
-          file = paste0(path_to_data, "aqi_means.csv"))
+write.csv(aqi_weekly_combo,
+          file = "../aqi_means.csv")
 
 # pm25: combine wide data
-pm25_old <- read.csv(paste0(path_to_data, "pm25.csv"))
+pm25_old <- read.csv("pm25.csv")
 
 pm_combo <- pm_wide %>% 
   mutate(`Site ID` = as.numeric(`Site ID`)) %>% 
   rename(Site.ID = `Site ID`) %>% 
   right_join(., pm25_old, by ='Site.ID') %>% 
   relocate(c("COUNTY", "latitude", "longitude", "name"), 
-           .after = 'Site.ID')
-write.csv(pm_combo, file = paste0(path_to_data, "pm25.csv"))
+           .after = 'Site.ID') %>% 
+  select(-c('X'))
+
+write.csv(pm_combo, file = "../pm25.csv", row.names = F)
 
 # aqi: combine wide data
-aqi_old <- read.csv(paste0(path_to_data, "aqi.csv"))
+aqi_old <- read.csv("aqi.csv")
 
 aqi_combo <- aqi_wide %>% 
   mutate(`Site ID` = as.numeric(`Site ID`)) %>% 
   rename(Site.ID = `Site ID`) %>% 
   right_join(., aqi_old, by ='Site.ID') %>% 
   relocate(c("COUNTY", "latitude", "longitude", "name"), 
-           .after = 'Site.ID')
+           .after = 'Site.ID') %>% 
+  select(-c('X'))
 
-write.csv(aqi_combo, file = paste0(path_to_data, "aqi.csv"))
-
+write.csv(aqi_combo, file = "../aqi.csv", row.names = F)
