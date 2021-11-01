@@ -1193,9 +1193,9 @@ server <- function(input, output) {
                  lng = pm25$longitude,
                  lat = pm25$latitude,
                  color = pm25palette(col),
-                 fillOpacity = 0.5,
-                 radius = 5000,
-                 stroke = FALSE,
+                 fillOpacity = 0.7,
+                 radius = 500,
+                 stroke = T,
                  layerId = pm25$Site.ID,
                  label = getLabels(in.date, pm25, "PM25"),
                  labelOptions = labelOptions(
@@ -1204,6 +1204,8 @@ server <- function(input, output) {
                    textsize = "15px",
                    direction = "auto"))
     }
+    
+    
     else if (input$covid_map_right_sensor == "aqi") {
       col <- aqi[, which(colnames(aqi) == format(in.date, "AQI_%Y%m%d"))]
       addCircles(map,
@@ -1211,9 +1213,9 @@ server <- function(input, output) {
                  lng = aqi$longitude,
                  lat = aqi$latitude,
                  color = aqipalette(col),
-                 fillOpacity = 0.5,
-                 radius = 5000,
-                 stroke = FALSE,
+                 fillOpacity = 0.7,
+                 radius = 500,
+                 stroke = T,
                  layerId = aqi$Site.ID,
                  label = getLabels(in.date, aqi, "AQI"),
                  labelOptions = labelOptions(
