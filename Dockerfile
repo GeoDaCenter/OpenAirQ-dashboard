@@ -17,7 +17,9 @@ RUN install2.r --error \
     raster \
     scales \
     zoo \
-    ggthemes
+    ggthemes \
+    RSocrata \
+    plyr
     
 WORKDIR /home/shinyusr
 COPY ./ .
