@@ -93,7 +93,7 @@ pm_combo <- pm_wide %>%
 write.csv(pm_combo, file = paste0(path_to_data, "pm25.csv"))
 
 # aqi: combine wide data
-aqi_old <- read.csv(paste0(path_to_data, "aqi.csv"))
+aqi_old <- read.csv(paste0(path_to_data, "AQI.csv"))
 
 aqi_combo <- aqi_wide %>% 
   mutate(`Site ID` = as.numeric(`Site ID`)) %>% 
@@ -102,5 +102,5 @@ aqi_combo <- aqi_wide %>%
   relocate(c("COUNTY", "latitude", "longitude", "name"), 
            .after = 'Site.ID')
 
-write.csv(aqi_combo, file = paste0(path_to_data, "aqi.csv"))
+write.csv(aqi_combo, file = paste0(path_to_data, "AQI.csv"))
 
