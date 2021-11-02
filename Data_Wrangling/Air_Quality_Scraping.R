@@ -18,7 +18,7 @@ aqi_old <- read.csv(paste0(path_to_data, "aqi.csv"))
 most_recent_date <- str_extract(names(aqi_old), "[0-9]{3,}") %>% 
   na.omit() %>% first() %>% ymd()
 last_day = most_recent_date + 1
-up_to_day <- as.character(Sys.Date() - 1)
+up_to_day <- as.character(Sys.Date())
 api_key <- Sys.getenv("api_key")
 
 
