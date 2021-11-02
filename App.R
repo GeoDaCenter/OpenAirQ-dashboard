@@ -487,11 +487,7 @@ ui <- dashboardPage(
     menuItem("Pollution Drivers", icon = icon("industry"),
              menuSubItem("Point Emissions", tabName = "pe"),
              menuSubItem("Roads", tabName = "roads")),
-    menuItem("Vulnerable Communities", icon = icon("heartbeat"),
-             menuSubItem("Social Vulnerability", tabName = "svi"),
-             menuSubItem("Economic Hardship", tabName = "hardind"),
-             menuSubItem("Health: COVID", tabName = "covid"),
-             menuSubItem("Health: Asthma", tabName = "asthma")),
+    menuItem("Chicago Health Atlas", href = "https://chicagohealthatlas.org", icon = icon("heartbeat")),
     menuItem("Downloads", icon = icon("download"), tabName = "downloads"))
   ),
 
@@ -3138,103 +3134,103 @@ server <- function(input, output) {
 
   ##### PRECIPITATION END #####
   
-  output$svi_map <- renderLeaflet({
-    leaflet() %>%
-      addProviderTiles("OpenStreetMap.HOT")%>%
-      list()%>% # these 3 lines fit the map to the bbox of large.area
-      c(chi.bounds)%>%
-      { exec(fitBounds, !!!.) }%>%
-      addPolygons(data = large.area, 
-                  color = "darkslategray",
-                  fillOpacity  = 0.00, 
-                  stroke = TRUE,
-                  opacity = 1,
-                  layerId = large.area$FIPS,
-                  weight = 1,
-                  highlight = highlightOptions(
-                    weight = 2, 
-                    color = "gray", 
-                    fillOpacity = 0.05))%>%
-      addPolygons(data = chi.boundary, 
-                  color = "darkslategray",
-                  fillOpacity  = 0.00, 
-                  stroke = TRUE,
-                  opacity = 1,
-                  layerId = "Chicago",
-                  weight = 2,
-                  highlight = highlightOptions(
-                    weight = 2, 
-                    color = "gray", 
-                    fillOpacity = 0.05))%>%
-      addPolygons(data = trees,
-                  fillColor = svipalette(trees$svi_pecent),
-                  fillOpacity  = 0.7,
-                  color = "white",
-                  stroke = FALSE,
-                  weight = 2,
-                  opacity = 1,
-                  dashArray = "3",
-                  layerId = trees$geoid,
-                  label = trees$geoid,
-                  labelOptions = labelOptions(
-                    style = list("font-weight" = "normal",
-                                 padding = "3px 8px"),
-                    textsize = "15px",
-                    direction = "auto"))%>%
-      addLegend("bottomleft", pal = svipalette, 
-                values = trees$svi_pecent,
-                title = "SVI Percentile", opacity = 1)
-    
-  })
-  
-  output$hardind_map <- renderLeaflet({
-    leaflet() %>%
-      addProviderTiles("OpenStreetMap.HOT")%>%
-      list()%>% # these 3 lines fit the map to the bbox of large.area
-      c(chi.bounds)%>%
-      { exec(fitBounds, !!!.) }%>%
-      addPolygons(data = large.area, 
-                  color = "darkslategray",
-                  fillOpacity  = 0.00, 
-                  stroke = TRUE,
-                  opacity = 1,
-                  layerId = large.area$FIPS,
-                  weight = 1,
-                  highlight = highlightOptions(
-                    weight = 2, 
-                    color = "gray", 
-                    fillOpacity = 0.05))%>%
-      addPolygons(data = chi.boundary, 
-                  color = "darkslategray",
-                  fillOpacity  = 0.00, 
-                  stroke = TRUE,
-                  opacity = 1,
-                  layerId = "Chicago",
-                  weight = 2,
-                  highlight = highlightOptions(
-                    weight = 2, 
-                    color = "gray", 
-                    fillOpacity = 0.05))%>%
-      addPolygons(data = trees,
-                  fillColor = hardpalette(trees$hardship),
-                  fillOpacity  = 0.7,
-                  color = "white",
-                  stroke = FALSE,
-                  weight = 2,
-                  opacity = 1,
-                  dashArray = "3",
-                  layerId = trees$geoid,
-                  label = trees$geoid,
-                  labelOptions = labelOptions(
-                    style = list("font-weight" = "normal",
-                                 padding = "3px 8px"),
-                    textsize = "15px",
-                    direction = "auto"))%>%
-      addLegend("bottomleft", pal = hardpalette, 
-                values = trees$hardship,
-                title = "Economic Hardship Index", opacity = 1)
-    
-  })
+  # output$svi_map <- renderLeaflet({
+  #   leaflet() %>%
+  #     addProviderTiles("OpenStreetMap.HOT")%>%
+  #     list()%>% # these 3 lines fit the map to the bbox of large.area
+  #     c(chi.bounds)%>%
+  #     { exec(fitBounds, !!!.) }%>%
+  #     addPolygons(data = large.area, 
+  #                 color = "darkslategray",
+  #                 fillOpacity  = 0.00, 
+  #                 stroke = TRUE,
+  #                 opacity = 1,
+  #                 layerId = large.area$FIPS,
+  #                 weight = 1,
+  #                 highlight = highlightOptions(
+  #                   weight = 2, 
+  #                   color = "gray", 
+  #                   fillOpacity = 0.05))%>%
+  #     addPolygons(data = chi.boundary, 
+  #                 color = "darkslategray",
+  #                 fillOpacity  = 0.00, 
+  #                 stroke = TRUE,
+  #                 opacity = 1,
+  #                 layerId = "Chicago",
+  #                 weight = 2,
+  #                 highlight = highlightOptions(
+  #                   weight = 2, 
+  #                   color = "gray", 
+  #                   fillOpacity = 0.05))%>%
+  #     addPolygons(data = trees,
+  #                 fillColor = svipalette(trees$svi_pecent),
+  #                 fillOpacity  = 0.7,
+  #                 color = "white",
+  #                 stroke = FALSE,
+  #                 weight = 2,
+  #                 opacity = 1,
+  #                 dashArray = "3",
+  #                 layerId = trees$geoid,
+  #                 label = trees$geoid,
+  #                 labelOptions = labelOptions(
+  #                   style = list("font-weight" = "normal",
+  #                                padding = "3px 8px"),
+  #                   textsize = "15px",
+  #                   direction = "auto"))%>%
+  #     addLegend("bottomleft", pal = svipalette, 
+  #               values = trees$svi_pecent,
+  #               title = "SVI Percentile", opacity = 1)
+  #   
+  # })
+  # 
+  # output$hardind_map <- renderLeaflet({
+  #   leaflet() %>%
+  #     addProviderTiles("OpenStreetMap.HOT")%>%
+  #     list()%>% # these 3 lines fit the map to the bbox of large.area
+  #     c(chi.bounds)%>%
+  #     { exec(fitBounds, !!!.) }%>%
+  #     addPolygons(data = large.area, 
+  #                 color = "darkslategray",
+  #                 fillOpacity  = 0.00, 
+  #                 stroke = TRUE,
+  #                 opacity = 1,
+  #                 layerId = large.area$FIPS,
+  #                 weight = 1,
+  #                 highlight = highlightOptions(
+  #                   weight = 2, 
+  #                   color = "gray", 
+  #                   fillOpacity = 0.05))%>%
+  #     addPolygons(data = chi.boundary, 
+  #                 color = "darkslategray",
+  #                 fillOpacity  = 0.00, 
+  #                 stroke = TRUE,
+  #                 opacity = 1,
+  #                 layerId = "Chicago",
+  #                 weight = 2,
+  #                 highlight = highlightOptions(
+  #                   weight = 2, 
+  #                   color = "gray", 
+  #                   fillOpacity = 0.05))%>%
+  #     addPolygons(data = trees,
+  #                 fillColor = hardpalette(trees$hardship),
+  #                 fillOpacity  = 0.7,
+  #                 color = "white",
+  #                 stroke = FALSE,
+  #                 weight = 2,
+  #                 opacity = 1,
+  #                 dashArray = "3",
+  #                 layerId = trees$geoid,
+  #                 label = trees$geoid,
+  #                 labelOptions = labelOptions(
+  #                   style = list("font-weight" = "normal",
+  #                                padding = "3px 8px"),
+  #                   textsize = "15px",
+  #                   direction = "auto"))%>%
+  #     addLegend("bottomleft", pal = hardpalette, 
+  #               values = trees$hardship,
+  #               title = "Economic Hardship Index", opacity = 1)
+  #   
+  # })
   
   ##### DOWNLOADS START #####
   
@@ -3247,9 +3243,26 @@ server <- function(input, output) {
                                              file.copy("Data/county_averages_quarterly.csv", file)
                                            })
   
-  output$master_raster <- downloadHandler(filename = "Master_Raster.tif",
-                                          content = function(file){
-                                          file.copy("Data/Master_Raster.tif", file)})
+  output$master_raster  <- downloadHandler(
+    filename = "Master_Raster.zip",
+    content = function(file) {
+      a <- tempdir()
+      print(a)
+      writeRaster(master.raster, paste0(a, "/Master_Raster"), format="raster", overwrite=TRUE)
+
+      zip.path <- file.path(a, "Master_Raster.zip")
+      shp.files <- list.files(a,
+                              "Master_Raster", 
+                              full.names = T)
+      zip.cmd <- paste("zip -j",
+                       zip.path,
+                       paste(shp.files, collapse = " "))
+      
+      system(zip.cmd)
+      file.copy(zip.path, file)
+      file.remove(zip.path, shp.files)
+    }
+  )
   
   output$master_raster_names <- downloadHandler(filename = "Master_Raster_Names.csv",
                                                 content = function(file) {
@@ -3276,7 +3289,6 @@ server <- function(input, output) {
       system(zip.cmd)
       file.copy(zip.path, file)
       file.remove(zip.path, shp.files)
-
     }
   )
 
