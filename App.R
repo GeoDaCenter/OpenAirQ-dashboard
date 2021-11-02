@@ -3243,9 +3243,26 @@ server <- function(input, output) {
                                              file.copy("Data/county_averages_quarterly.csv", file)
                                            })
   
-  output$master_raster <- downloadHandler(filename = "Master_Raster.tif",
-                                          content = function(file){
-                                          file.copy("Data/Master_Raster.tif", file)})
+  output$master_raster  <- downloadHandler(
+    filename = "Master_Raster.zip",
+    content = function(file) {
+      a <- tempdir()
+      print(a)
+      writeRaster(master.raster, paste0(a, "/Master_Raster"), format="raster", overwrite=TRUE)
+
+      zip.path <- file.path(a, "Master_Raster.zip")
+      shp.files <- list.files(a,
+                              "Master_Raster", 
+                              full.names = T)
+      zip.cmd <- paste("zip -j",
+                       zip.path,
+                       paste(shp.files, collapse = " "))
+      
+      system(zip.cmd)
+      file.copy(zip.path, file)
+      file.remove(zip.path, shp.files)
+    }
+  )
   
   output$master_raster_names <- downloadHandler(filename = "Master_Raster_Names.csv",
                                                 content = function(file) {
@@ -3272,7 +3289,6 @@ server <- function(input, output) {
       system(zip.cmd)
       file.copy(zip.path, file)
       file.remove(zip.path, shp.files)
-
     }
   )
 
