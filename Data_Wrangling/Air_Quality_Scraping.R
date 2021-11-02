@@ -3,12 +3,10 @@ library(tidyr)
 library(jsonlite)
 library(stringr)
 library(lubridate)
-library(readtext)
 
-# Read in the most recent day to identify the start day
 
-#setwd('E:/Spatial DS RA/OpenAirQ-dashboard/Data_Wrangling/')
-path_to_data <- "../Data/PM25_Weekly/"
+#setwd('E:/Spatial DS RA/Action-Testing/Data_Wrangling/')
+path_to_data <- "Data/PM25_Weekly/"
 
 # pm25: combine wide data
 pm25_old <- read.csv(paste0(path_to_data, "pm25.csv"))
@@ -16,12 +14,12 @@ pm25_old <- read.csv(paste0(path_to_data, "pm25.csv"))
 aqi_old <- read.csv(paste0(path_to_data, "aqi.csv"))
 
 # setup
-api_key <- readtext(file = "../Data/AirNow_API_key.txt")$text
-
+# Read in the most recent day to identify the start day
 most_recent_date <- str_extract(names(aqi_old), "[0-9]{3,}") %>% 
   na.omit() %>% first() %>% ymd()
 last_day = most_recent_date + 1
 up_to_day <- as.character(Sys.Date() - 1)
+api_key <- Sys.getenv("api_key")
 
 
 # the AirNow API uses UTC time: UTC 5 am = CDT 12 am
