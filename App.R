@@ -735,9 +735,9 @@ ui <- dashboardPage(
     
     ##### VULNERABILITY START #####
     
-    generateOneTimeTab("svi", "Social Vulnerability Index", "", ""),
-    
-    generateOneTimeTab("hardind", "Economic Hardship Index", "", ""),
+    # generateOneTimeTab("svi", "Social Vulnerability Index", "", ""),
+    # 
+    # generateOneTimeTab("hardind", "Economic Hardship Index", "", ""),
     
     ##### VULNERABILITY END #####
     
@@ -760,11 +760,12 @@ ui <- dashboardPage(
                                style = "simple")),
               box(width = 4,
                   h3("Raster", align = "center"),
+                  p("Warning: requires processing time", align = "center"),
                   downloadBttn("master_raster",
-                               label = "Download 1km Resolution Raster",
+                               label = "Download 1km Quarterly Raster",
                                style = "simple"),
-                  downloadBttn("master_raster_names",
-                               label = "Download Raster Layer Names", 
+                  downloadBttn("monthly_raster",
+                               label = "Download 1km Monthly Raster", 
                                style = "simple")),
               box(width = 4,
                   h3("Shapefile", align = "center"),
@@ -3264,10 +3265,26 @@ server <- function(input, output) {
     }
   )
   
-  output$master_raster_names <- downloadHandler(filename = "Master_Raster_Names.csv",
-                                                content = function(file) {
-                                                  file.copy("Data/Master_Raster_Names.csv", file)
-                                                })
+  output$monthly_raster <- downloadHandler(
+    filename = "Monthly_Raster.zip",
+    content = function(file) {
+      a <- tempdir()
+      print(a)
+      writeRaster(stack(c(monthly.raster, faa.mon.raster)), paste0(a, "/Monthly_Raster"), format="raster", overwrite=TRUE)
+      
+      zip.path <- file.path(a, "Monthly_Raster.zip")
+      shp.files <- list.files(a,
+                              "Monthly_Raster", 
+                              full.names = T)
+      zip.cmd <- paste("zip -j",
+                       zip.path,
+                       paste(shp.files, collapse = " "))
+      
+      system(zip.cmd)
+      file.copy(zip.path, file)
+      file.remove(zip.path, shp.files)
+    }
+  )
   ### Source shapefile zip download code:
   ### https://stackoverflow.com/questions/41707760/download-a-shape-file-from-shiny
   
