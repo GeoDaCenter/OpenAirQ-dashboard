@@ -21,7 +21,9 @@ RUN install2.r --error \
     RSocrata \
     plyr \
     covr \
-    rex
+    rex \
+    jsonlite \
+    geojsonio
     
 WORKDIR /home/shinyusr
 COPY ./ .
