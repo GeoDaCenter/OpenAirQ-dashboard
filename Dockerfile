@@ -23,7 +23,11 @@ RUN install2.r --error \
     covr \
     rex \
     jsonlite \
-    geojsonio
+    geojsonio \ 
+    dplyr \ 
+    tidyr \ 
+    stringr \
+    purrr
     
 WORKDIR /home/shinyusr
 COPY ./ .
