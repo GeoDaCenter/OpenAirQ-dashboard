@@ -16,6 +16,10 @@ deployApp(
     # appFiles = c(NULL #, you can specify which files to deploy, 
     # #or keep this NULL to deploy everything
     # ),
+    appFiles = c("App.R",
+                 "DashFunctions.R",
+                 "Data/",
+                 "www/"),
     appName = error_on_missing_name("MASTERNAME"),
     appTitle = "shinyapplication"
 )
