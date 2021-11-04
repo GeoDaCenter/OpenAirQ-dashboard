@@ -8,7 +8,7 @@ The home tab includes 2 explorer pages.
 
 On the `Region Explorer` page, the user can select a subset of counties (by clicking) and variables, allowing comparison of their trends between each other and to the mean trend.
 
-On the `Health Explorer` page, two maps are provided, allowing the user to select types of weekly sensor data, and a choropleth underlay (either various historic data, or weekly COVID data). Individual sensors or zip codes can also be selected, to compare trends on the chart below.
+On the `Health Explorer` page, two maps are provided, allowing the user to select types of weekly sensor data, and a choropleth underlay (either various historic data, or weekly COVID data).
 
 The home tab also includes a link to the Healthy Regions and Policies Lab's Tree Equity Tool, and an about section.
 
