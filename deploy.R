@@ -17,5 +17,6 @@ deployApp(
     # #or keep this NULL to deploy everything
     # ),
     appName = error_on_missing_name("MASTERNAME"),
-    appTitle = "shinyapplication"
+    appTitle = "shinyapplication",
+    lint = FALSE
 )
