@@ -858,23 +858,35 @@ server <- function(input, output) {
   })
   
   observeEvent(input$clearshapes,{
-    if(input$sidebar == "home") {
+    if(input$sidebar == "region") {
       home.proxy <- leafletProxy("homemap")
         if(input$clearshapes){
           home.proxy %>%
-            removeShape(layerId = c(paste("Highlighted", all.fips$fips))) %>%
-            setView(lat = 41.97736,
-                    lng = -87.62255,
-                    zoom = 7)
+            removeShape(layerId = c(paste("Highlighted", all.fips$fips)))
           all.fips$fips <- c()
-      }
+        }
+      # Reset selectize input to clear choices
+      updateSelectizeInput(session = getDefaultReactiveDomain(), "homevar",
+                           choices=c("Aerosol Optical Depth" = "AOD",
+                                      "Normalized Difference Vegetation Index" = "NDVI",
+                                      "Bidirectional Reflectance Factor" = "BRF",
+                                      "PM2.5" = "PM25",
+                                      "PM10" = "PM10",
+                                      "Carbon Monoxide" = "CO",
+                                      "Nitrogen Dioxide" = "NO2",
+                                      "Ozone" = "Ozone",
+                                      "Sulfur Dioxide" = "SO2",
+                                      "Lead" = "Lead",
+                                      "Temperature" = "Temp",
+                                      "Barometric Pressure" = "Pressure"),
+                           options = list(maxItems = 7))
     }
   })
   
   
   # Highlight clicked counties, unhighlight double clicked, zoom to center of all selected
   observeEvent(input$homemap_shape_click, {
-    if(input$sidebar == "home") { #Optimize Dashboard speed by not observing outside of tab
+    if(input$sidebar == "region") { #Optimize Dashboard speed by not observing outside of tab
       
       this.fips <- input$homemap_shape_click$id
       
@@ -919,7 +931,7 @@ server <- function(input, output) {
       home.proxy %>%
         setView(lng = view.lon,
                 lat = view.lat, 
-                zoom = 7)
+                zoom = 8)
       
     }
   })
