@@ -636,7 +636,7 @@ ui <- dashboardPage(
                 tags$ul(
                   tags$li(tags$a(href="https://github.com/Makosak", "Marynia Kolak")),
                   tags$li(tags$a("Andrew Morse", href = "https://github.com/andrewjmorse")),
-                  tags$li(tags$a("James Keane Kolak", href = "https://github.com/yahmskeano")),
+                  tags$li(tags$a("James Keane", href = "https://github.com/yahmskeano")),
                   tags$li(tags$a("Qiwei Lin", href = "https://github.com/QWL55")),
                   tags$li(tags$a("Dylan Halpern", href = "https://github.com/nofurtherinformation/"))
                 )
