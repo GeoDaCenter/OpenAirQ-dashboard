@@ -461,10 +461,11 @@ ui <- dashboardPage(
 
   dashboardSidebar(sidebarMenu(id = "sidebar",
     menuItem("Home", tabName = "home", icon = icon("home"),
-             menuSubItem("Region Explorer", tabName = "home", icon = icon("map-marked-alt")),
+             menuSubItem("Introduction", tabName = "home", icon = icon("info")),
+             menuSubItem("Region Explorer", tabName = "region", icon = icon("map-marked-alt")),
              menuSubItem("Health Explorer", tabName = "covid", icon = icon("medkit")),
              menuSubItem("Tree Equity Tool", href = "https://rhabus.carto.com/builder/50d25399-d7c7-4cf1-9e17-0ef44c7d7315/embed_protected?", icon = icon("tree")),
-             menuSubItem("About", tabName = "about", icon = icon("info"))),
+             menuSubItem("About", tabName = "about", icon = icon("question"))),
     menuItem("EPA Sensor Data", icon = icon("envira"),
              menuSubItem("PM2.5", tabName = "pm25"),
              menuSubItem("PM10", tabName = "pm10"),
@@ -503,13 +504,64 @@ ui <- dashboardPage(
 
     tabItems(
 
-    ##### HOME START ####
-    
+    ##### HOME START #####
     tabItem(tabName = "home",
+    
+            fluidRow(
+              box(width = 12,  
+                img(src='header.png', width = '100%', align = "center", style="max-width:1024px;display:block;margin:0 auto;", alt="Chicago's Open Air Quality Environment Explorer"),                
+                h1("Explore current and historical trends of air quality in the Chicagoland area", align="center")
+              )),
+            fluidRow(
+              box(width = 6,
+                h2("What can this app do?", align = "center", style = "color: #80ceff"),
+                p("This R-shiny based web application provides a current snapshot and look back at air quality indicators to visualize how measured air quality has changed
+                 across space and time. Primarily, the data presented in this application takes the form of 1 kilometer x 1 kilometer raster data, reflecting a grid of data overlaid
+                 on top of the Greater Chicagoland area.")
+              ),
+              box(width = 6,
+                h2("Getting Started", align = "center", style = "color: #c71414"),
+                p("In the menu, there are several categories of sensor data, including EPA sensors, Meteorological data, remote-sensing (satellite) data, and modeled data. Explore these
+                tabs to see how different metrics shed light on the air quality of the diverse areas around Chicagoland.")
+              )
+            ),
+            fluidRow(
+              box(width = 6,
+                h2("More Information", align = "center", style = "color: #c71414"),
+                p("For further information about the project objectives, overview, team, and data access, visit the About tab under Home.")
+              ),
+              box(width = 6,
+                h2("Open Source and Open Science", align = "center",  style = "color: #80ceff"),
+                p("This project emphasizes open source code and open science data practices. To explore the code and data, visit the links below:"),
+                tags$a(href="https://github.com/GeoDaCenter/OpenAirQ-dashboard/tree/master/Data", "Data"),
+                tags$br(),
+                tags$a(href="https://github.com/GeoDaCenter/OpenAirQ-dashboard", "Code")
+              )
+            ),
+            fluidRow(
+              box(width = 12,
+                h3("Open Air Chicago is a project of", align = "center", style = "color: #c71414"),
+                tags$hr(),
+                tags$a(href="https://herop.ssd.uchicago.edu/",
+                  img(src='herop.png', width = '50%', style="display:block;max-width:200px;margin:0 auto 20px auto", alt="Healthy Regions and Policy Lab")
+                ),  
+                tags$a(href="https://spatial.uchicago.edu/",
+                  img(src='CSDS_logo_4C_1.jpg', width = '50%', style="display:block;max-width:200px;margin:0 auto 20px auto", alt="Center for Spatial Data Science"),
+                )
+              )
+            )
+    ),
+    ##### HOME END #####
+
+    ##### REGION EXPLORER START ####
+    
+    tabItem(tabName = "region",
+            
             
             fluidRow(
               box(width = 12,
-                  img(src='header.png', width = '100%', align = "right")
+                  h2("Region Explorer", align = "center"),
+                  textOutput("region-explorer-h2")
               )),
     
             fluidRow(
@@ -540,8 +592,8 @@ ui <- dashboardPage(
                   actionButton("clearshapes", "Clear Selection")))
             ),
 
-    ##### HOME END #####
-    
+    ##### REGION EXPLORER END #####
+
     ##### ABOUT START #####
     tabItem(tabName = "about",
             fluidRow(
@@ -576,7 +628,20 @@ ui <- dashboardPage(
               box(width = 6,
                   h2("Methodology", align = "center",  style = "color: #80ceff"),
                   p("In addition to differing in source and format, the raw data also exists at a variety of spatial and temporal resolutions. All data was aggregated to a standard, 1km resolution grid at both monthly and quarterly intervals. For the EPA sensor data, the gridded values were extracted from an Inverse Distance Weighted interpolation of sensor averages. Interpolated values for variables with fewer sensors will be less accurate than those with more sensors. Due to data availability, particularly with NASA’s remote-sensed Aerosol Optical Depth, individual variable pages provide visualizations of the quarterly aggregates to maximize coverage. For data not originally provided at a 1km resolution, unless otherwise noted on the “Source” tab on each variable page, the value assigned to each 1km cell is the mean of all measured values within it.")
-            ))
+            )),
+            fluidRow(
+              box(width = 6,
+                h2("Contributors", align="center"),
+                p("Below are the contributors to the Open Air Chicago project."),
+                tags$ul(
+                  tags$li(tags$a(href="https://github.com/Makosak", "Marynia Kolak")),
+                  tags$li(tags$a("Andrew Morse", href = "https://github.com/andrewjmorse")),
+                  tags$li(tags$a("James Keane Kolak", href = "https://github.com/yahmskeano")),
+                  tags$li(tags$a("Qiwei Lin", href = "https://github.com/QWL55")),
+                  tags$li(tags$a("Dylan Halpern", href = "https://github.com/nofurtherinformation/"))
+                )
+              )
+            )
     ),
     ##### ABOUT END #####
     
