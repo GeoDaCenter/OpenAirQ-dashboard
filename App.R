@@ -1,3 +1,4 @@
+# EXTERNAL LIBRARIES
 library(shiny)
 library(shinydashboard)
 library(shinyWidgets)
@@ -16,42 +17,40 @@ library(scales)
 library(zoo)
 library(ggthemes)
 
-
-##### DATA LOADING START #####
+# FUNCTIONS FOR APP USE
 source("DashFunctions.R")
 
-monthly.raster <- stack("Data/EPA_Monthly.grd")
+##### DATA LOADING START #####
+
+
+#### HISTORIC RASTERS
 master.raster <- stack("Data/Master_Raster.grd")
+monthly.raster <- stack("Data/EPA_Monthly.grd")
 faa.mon.raster <- stack("Data/FAA_Monthly.grd")
-# raster.names <- read.csv("Data/Master_Raster_Names.csv")
 
-# names(master.raster) <- raster.names$x
-large.area <- st_read("Data/LargeAreaCounties")
-large.area$COUNTYNAME <- as.character(large.area$COUNTYNAME)
-
-descriptions <- read.csv("Data/Description.csv", stringsAsFactors = F)
-
-county.avgs <- read.csv("Data/county_averages_monthly.csv")
-county.avgs$Name <- as.character(county.avgs$Name)
-
-var.avgs <- colMeans(county.avgs[,4:ncol(county.avgs)], na.rm = T)
-
-#epa.points <- st_read("Data/EPA_Points")
-
-#Test PM2.5 setup for 5/25/21 meeting
-#pm25.sensors <- read_csv("Data/PM25_Sensors_Monthly.csv")
+#### HISTORIC SENSOR READINGS
 epa.quarterly <- st_read("Data/EPA_Quarterly.geojson")
 faa.quarterly <- st_read("Data/FAA_Quarterly.geojson")
 
 epa.monthly <- st_read("Data/EPA_Monthly.geojson")
 faa.monthly <- st_read("Data/FAA_Monthly.geojson")
 
+#### COUNTY LEVEL DATA
+large.area <- st_read("Data/LargeAreaCounties")
+large.area$COUNTYNAME <- as.character(large.area$COUNTYNAME)
+county.avgs <- read.csv("Data/county_averages_monthly.csv")
+county.avgs$Name <- as.character(county.avgs$Name)
+var.avgs <- colMeans(county.avgs[,4:ncol(county.avgs)], na.rm = T)
+
+#### MAP DATA
 chi.map <- st_read("Data/Chicago")
-#chi.map <- sf::st_transform(chi.map, CRS('+proj=longlat +datum=WGS84'))
 chi.admin.map<- st_read("Data/ZipcodeBoundary")
 chi.boundary<- st_union(chi.admin.map)
 
-#Covid data (temp?)
+#### Variable Descriptions
+descriptions <- read.csv("Data/Description.csv", stringsAsFactors = F)
+
+#### HEALTH EXPLORER DATA
 pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
 pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
 week.idx<- read.csv("Data/Week_Index.csv")$x
@@ -77,11 +76,8 @@ cdph.permits <- st_read("Data/CDPH_Permits")
 
 
 #NN Data Loading
-# nn.raster <- stack("Data/NN_Results.tif")
-# nn.names <- read.csv("Data/NN_Raster_Names.csv")
 nn.raster <- stack("Data/NN/nn_21_base.grd")
 nn.names <- read.csv("Data/NN_Raster_Names_New.csv")
-
 names(nn.raster) <- nn.names$nn_names
 
 ##### DATA LOADING END #####
@@ -96,10 +92,8 @@ daterange<- paste("From", end_date, "to", end_date + days(6), sep = " ")
 
 ##### COLOR BREAKS #####
 
-# pm25.bins <- classIntervals(na.omit(unlist(pm25[,7:ncol(pm25)])), 5, style="quantile")$brks # 5 quantile bins
 pm25.bins <- classIntervals(na.omit(unlist(pm25[,7:ncol(pm25)])), 5, style="fisher")$brks # 5 natural bins
 pm25palette <- colorBin(palette="YlOrRd" , bins=pm25.bins, na.color="dimgrey") # discrete
-# pm25palette <- colorBin(palette="YlOrRd" , domain = unlist(pm25[,6:ncol(pm25)]), na.color="dimgrey") # continuous
 
 aqi.bins<- c(0, 50, 100, 150, 200, 300, 500)
 aqi.palette<- c('#00FF00','#FFFF00','#FFA500','#FF0000','#99004C','#800000')
@@ -108,28 +102,21 @@ aqi.legend.labels<- c("Good", "Moderate", "USG",
 
 aqipalette <- colorBin(palette= aqi.palette, bins = aqi.bins, na.color="dimgrey")
 
-# covid.bins <- classIntervals(na.omit(c(sapply(6:15, function(z) covid[,z][[1]]))), 5, style="quantile")$brks # 5 quantile bins
 covid.bins <- classIntervals(na.omit(c(sapply(6:15, function(z) covid[,z][[1]]))), 5, style="fisher")$brks # 5 natural bins
 covidpalette <- colorBin(palette="YlOrRd" , bins=covid.bins, na.color="transparent") # discrete
-# covidpalette <- colorBin(palette="YlOrRd" , domain = c(sapply(6:15, function(z) covid[,z][[1]])), na.color="transparent") # continuous
 
-# asthma.bins <- classIntervals(na.omit(c(sapply(6:7, function(z) asthma[,z][[1]]))), 5, style="quantile")$brks # 5 quantile bins
 asthma.bins <- classIntervals(na.omit(c(sapply(6:7, function(z) asthma[,z][[1]]))), 5, style="fisher")$brks # 5 natural bins
 asthmapalette <- colorBin(palette="YlOrRd" , bins=asthma.bins, na.color="transparent") # discrete
-# asthmapalette <- colorBin(palette="YlOrRd" , domain = na.omit(c(sapply(6:7, function(z) asthma[,z][[1]]))), na.color="transparent") # continuous
 
-# svi.bins <- classIntervals(na.omit(trees$svi_pecent), 5, style="quantile")$brks # 5 quantile bins
 svi.bins <- classIntervals(na.omit(trees$svi_pecent), 5, style="fisher")$brks # 5 natural bins
 svipalette <- colorBin(palette="YlOrRd" , bins=svi.bins, na.color="transparent") # discrete
-# svipalette <- colorBin(palette="YlOrRd" , domain = na.omit(trees$svi_pecent), na.color="transparent") # continuous
 
-# hard.bins <- classIntervals(na.omit(trees$hardship), 5, style="quantile")$brks # 5 quantile bins
 hard.bins <- classIntervals(na.omit(trees$hardship), 5, style="fisher")$brks # 5 natural bins
 hardpalette <- colorBin(palette="YlOrRd" , bins=hard.bins, na.color="transparent") # discrete
-# hardpalette <- colorBin(palette="YlOrRd" , domain = na.omit(trees$hardship), na.color="transparent") # continuous
-
 
 ##### COLOR BREAKS END #####
+
+##### TAB SETUP START #####
 
 ##### NN START #####
 nn.description <- c("This neural net model was generated by the Center for Spatial Data Science at the University of Chicago. It is a multi-stage model incorporating readings from NASA's Aerosol Optical Depth dataset and approximately a dozen other air quality covariates. The model was run once per month for a period between March of 2014 and December of 2018. ")
@@ -286,6 +273,8 @@ precip.source <- descriptions$Source[descriptions["Variable"] == "Precip"]
 
 ##### PRECIP END #####
 
+##### TAB SETUP END #####
+
 ##### PLOT ADJUSTMENT START #####
 
 master.raster$PECount[which(getValues(master.raster$PECount) == 0)] <- NA ### Needed for plotting; raster error when try to write new file
@@ -295,7 +284,6 @@ master.raster$RdDnsty[which(getValues(master.raster$RdDnsty) == 0)] <- NA
 
 ##### COVID START #####
 
-# Getting an error: Error in sprintf(covid$zip) : 'fmt' is not a character vector
 labels_covid <- sprintf(
   as.character(covid$zip)
 ) %>% lapply(htmltools::HTML)
@@ -328,15 +316,6 @@ sidebar_select_gradient <- cssGradientThreeColors(
   ,colorEndPos = 100
 )
 
-# sidebar_hover_gradient <- cssGradientThreeColors(
-#   direction = "right"
-#   ,colorStart = chicago_red
-#   ,colorMiddle = "rgba(199,80,80,1)"
-#   ,colorEnd = "rgba(199,110,110, 1)"
-#   ,colorStartPos = 0
-#   ,colorMiddlePos = 30
-#   ,colorEndPos = 100
-# )
 sidebar_hover_gradient <- sidebar_select_gradient
 
 ### creating custom theme object
@@ -712,27 +691,29 @@ ui <- dashboardPage(
                     tabPanel(title = "Source",
                              h4("Data Source"),
                              p(nn.source))),
-                  radioGroupButtons(inputId = paste("nn", "chi_zoom", sep = "_"),
-                                    "Set View", 
-                                    c("21 Counties" = "lac", 
-                                      "Chicago" = "chi"))
-              ),
+              fluidRow(
+                column(width = 5,
+                       radioGroupButtons(inputId = paste("nn", "chi_zoom", sep = "_"),
+                                         "Set View", 
+                                         c("21 Counties" = "lac", 
+                                           "Chicago" = "chi"))),
+                column(width = 7,
+                       radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette", 
+                                         c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
+                                         selected = "ovr")),
+                column(width = 12,
+                       sliderTextInput("nn_dt", "Select Month:",
+                                choices = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="month"),
+                                                 "%Y/%m"),
+                                selected = "2016/07", grid = FALSE)))),
               box(width = 8,
-                  sliderInput(paste("nn", "dt", sep = "_"), "Select month:",
-                              min = strptime("2014/03/01","%Y/%m/%d"), 
-                              max = strptime("2018/12/31","%Y/%m/%d"),
-                              value = strptime("2016/07/01","%Y/%m/%d"),
-                              timeFormat = "%Y/%m",
-                              step = as.difftime(30, units = "days"),
-                              animate = animationOptions(interval = 2000)),
-                  leafletOutput(paste("nn", "map", sep = "_"),height = mapheight),
-                  radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette", 
-                                    c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                    selected = "ovr"))
+                  leafletOutput(paste("nn", "map", sep = "_"),height = "90vh"))
             )),
     
     
     ##### NN END #####
+    
+    ##### HISTORICAL DATA TABS START #####
 
     generateQuarterlyTab(aod.tabname, aod.name, aod.description, aod.source),
 
@@ -740,7 +721,6 @@ ui <- dashboardPage(
 
     generateQuarterlyTab(brf.tabname, brf.name, brf.description, brf.source),
 
-    ##### LAND USE START #####
     tabItem(tabName = "landcover",
             fluidRow(
               box(width = 4,
@@ -756,7 +736,7 @@ ui <- dashboardPage(
                                     c("21 Counties" = "lac", 
                                       "Chicago" = "chi"))),
               box(width = 8,
-                  leafletOutput("lc_map", height = mapheight),
+                  leafletOutput("lc_map", height = "90vh"),
                   radioGroupButtons(inputId = "lc_choose",
                                     "Select Index",
                                     c("Green" = "grn_ndx",
@@ -765,7 +745,6 @@ ui <- dashboardPage(
                   )
             )
     ),
-    ##### LAND USE END #####
 
     generateOneTimeTab(elevation.tabname, elevation.name, elevation.description, elevation.source),
 
@@ -791,12 +770,8 @@ ui <- dashboardPage(
     generateDynaTab(temp.tabname, temp.name, temp.description, temp.source),
     
     generateDynaTab(pressure.tabname, pressure.name, pressure.description, pressure.source),
-
-    ##### PRECIPITATION START #####
     
     generateDynaTab(precip.tabname, precip.name, precip.description, precip.source),
-    
-    ##### PRECIPITATION END #####
     
     ##### VULNERABILITY START #####
     
@@ -1033,11 +1008,6 @@ server <- function(input, output) {
 
   ##### HOME END #####
 
-  ##### ABOUT START #####
-  
-
-  ##### ABOUT END #####
-  
   ##### COVID START #####
   
   all.fips <- reactiveValues(fips = c())
@@ -1450,7 +1420,7 @@ server <- function(input, output) {
     
     map
   }
-  ##### REACTIVE FUNCTIONS END #####
+
   
   output$covid_map_left <- renderLeaflet({
     leaflet() %>%
@@ -2012,7 +1982,6 @@ server <- function(input, output) {
     dashMap(this.pm25.name, pm25.pal,
             raster = monthly.raster, area = large.area,
             layerId = large.area$FIPS, EPApoints = epa.monthly,
-            VarName = "PM25",
             units = "(ug/m3)")
     
   })
@@ -2124,7 +2093,7 @@ server <- function(input, output) {
 
     dashMap(this.pm10.name, pm10.pal, raster = monthly.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.monthly, VarName = "PM10", 
+            EPApoints = epa.monthly, 
             units = "(ug/m3)")
 
   })
@@ -2185,10 +2154,10 @@ server <- function(input, output) {
   observeEvent(input$pm10_chi_zoom, {
     if(input$sidebar == "pm10") {
       if(input$pm10_chi_zoom == "chi") {
-        chiView("pm10_map", chi.map, EPApoints = epa.quarterly, VarName = "PM10") 
+        chiView("pm10_map", chi.map, EPApoints = epa.quarterly) 
       }
       else if (input$pm10_chi_zoom == "lac") {
-        lacView("pm10_map", large.area, EPApoints = epa.quarterly, VarName = "PM10")
+        lacView("pm10_map", large.area, EPApoints = epa.quarterly)
       }
     }
   })
@@ -2230,7 +2199,7 @@ server <- function(input, output) {
 
     dashMap(this.co.name, co.pal, raster = monthly.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.monthly, VarName = "CO")
+            EPApoints = epa.monthly)
 
   })
   
@@ -2291,10 +2260,10 @@ server <- function(input, output) {
   observeEvent(input$co_chi_zoom, {
     if(input$sidebar == "co") {
       if(input$co_chi_zoom == "chi") {
-        chiView("co_map", chi.map, EPApoints = epa.quarterly, VarName = "CO") 
+        chiView("co_map", chi.map) 
       }
       else if (input$co_chi_zoom == "lac") {
-        lacView("co_map", large.area, EPApoints = epa.quarterly, VarName = "CO")
+        lacView("co_map", large.area)
       }
     }
   })
@@ -2336,7 +2305,7 @@ server <- function(input, output) {
 
     dashMap(this.no2.name, no2.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.quarterly, VarName = "NO2")
+            EPApoints = epa.quarterly)
 
   })
   
@@ -2397,10 +2366,10 @@ server <- function(input, output) {
   observeEvent(input$no2_chi_zoom, {
     if(input$sidebar == "no2") {
       if(input$no2_chi_zoom == "chi") {
-        chiView("no2_map", chi.map, EPApoints = epa.quarterly, VarName = "NO2") 
+        chiView("no2_map", chi.map) 
       }
       else if (input$no2_chi_zoom == "lac") {
-        lacView("no2_map", large.area, EPApoints = epa.quarterly, VarName = "NO2")
+        lacView("no2_map", large.area)
       }
     }
   })
@@ -2441,7 +2410,7 @@ server <- function(input, output) {
 
     dashMap(this.o3.name, o3.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.quarterly, VarName = "Ozone")
+            EPApoints = epa.quarterly)
 
   })
   
@@ -2502,10 +2471,10 @@ server <- function(input, output) {
   observeEvent(input$o3_chi_zoom, {
     if(input$sidebar == "o3") {
       if(input$o3_chi_zoom == "chi") {
-        chiView("o3_map", chi.map, EPApoints = epa.quarterly, VarName = "Ozone") 
+        chiView("o3_map", chi.map) 
       }
       else if (input$o3_chi_zoom == "lac") {
-        lacView("o3_map", large.area, EPApoints = epa.quarterly, VarName = "Ozone")
+        lacView("o3_map", large.area)
       }
     }
   })
@@ -2546,7 +2515,7 @@ server <- function(input, output) {
 
     dashMap(this.so2.name, so2.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.quarterly, VarName = "SO2")
+            EPApoints = epa.quarterly)
 
   })
   
@@ -2608,10 +2577,10 @@ server <- function(input, output) {
   observeEvent(input$so2_chi_zoom, {
     if(input$sidebar == "so2") {
       if(input$so2_chi_zoom == "chi") {
-        chiView("so2_map", chi.map, EPApoints = epa.quarterly, VarName = "SO2") 
+        chiView("so2_map", chi.map) 
       }
       else if (input$so2_chi_zoom == "lac") {
-        lacView("so2_map", large.area, EPApoints = epa.quarterly, VarName = "SO2")
+        lacView("so2_map", large.area)
       }
     }
   })
@@ -2653,7 +2622,7 @@ server <- function(input, output) {
 
     dashMap(this.pb.name, pb.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = epa.quarterly, VarName = "Lead")
+            EPApoints = epa.quarterly)
 
   })
   
@@ -2716,18 +2685,19 @@ server <- function(input, output) {
   observeEvent(input$pb_chi_zoom, {
     if(input$sidebar == "pb") {
       if(input$pb_chi_zoom == "chi") {
-        chiView("pb_map", chi.map, EPApoints = epa.quarterly, VarName = "Lead") 
+        chiView("pb_map", chi.map) 
       }
       else if (input$pb_chi_zoom == "lac") {
-        lacView("pb_map", large.area, EPApoints = epa.quarterly, VarName = "Lead")
+        lacView("pb_map", large.area)
       }
     }
   })
 
   ###### PB END #####
   
-  
   ###### EPA Variables END #####  
+  
+  ###### Pollution Drivers START#####  
 
   output$pe_map <- renderLeaflet({
 
@@ -2895,7 +2865,8 @@ server <- function(input, output) {
     }
   })
   
-
+  ###### Pollution Drivers END#####  
+  
   ###### FAA START #####
   
   temp_points <- reactive({
@@ -2929,7 +2900,7 @@ server <- function(input, output) {
 
     dashMap(this.temp.name, temp.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = faa.quarterly, VarName = "Temp", units = "(\u00B0F)")
+            EPApoints = faa.quarterly, units = "(\u00B0F)")
   })
   
   
@@ -2991,10 +2962,10 @@ server <- function(input, output) {
   observeEvent(input$temp_chi_zoom, {
     if(input$sidebar == "temp") {
       if(input$temp_chi_zoom == "chi") {
-        chiView("temp_map", chi.map, EPApoints = faa.quarterly, VarName = "Temp") 
+        chiView("temp_map", chi.map) 
       }
       else if (input$temp_chi_zoom == "lac") {
-        lacView("temp_map", large.area, EPApoints = faa.quarterly, VarName = "Temp")
+        lacView("temp_map", large.area)
       }
     }
   })
@@ -3030,7 +3001,7 @@ server <- function(input, output) {
     
     dashMap(this.pressure.name, pressure.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
-            EPApoints = faa.quarterly, VarName = "Pressure", units = "(mbar)")
+            EPApoints = faa.quarterly, units = "(mbar)")
   })
   
   output$pressure_density <- renderPlot({
@@ -3091,10 +3062,10 @@ server <- function(input, output) {
   observeEvent(input$pressure_chi_zoom, {
     if(input$sidebar == "pressure") {
       if(input$pressure_chi_zoom == "chi") {
-        chiView("pressure_map", chi.map, EPApoints = faa.quarterly, VarName = "Pressure") 
+        chiView("pressure_map", chi.map) 
       }
       else if (input$pressure_chi_zoom == "lac") {
-        lacView("pressure_map", large.area, EPApoints = faa.quarterly, VarName = "Pressure")
+        lacView("pressure_map", large.area)
       }
     }
   })
@@ -3130,7 +3101,7 @@ server <- function(input, output) {
     precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = master.raster)
   
     precip.map <- dashMap(this.precip.name, precip.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS,
-                          EPApoints = faa.quarterly, VarName = "Precip", units = "(inches)")
+                          EPApoints = faa.quarterly, units = "(inches)")
   })
   
   output$precip_density <- renderPlot({
@@ -3190,15 +3161,17 @@ server <- function(input, output) {
   observeEvent(input$precip_chi_zoom, {
     if(input$sidebar == "precip") {
       if(input$precip_chi_zoom == "chi") {
-        chiView("precip_map", chi.map, EPApoints = faa.quarterly, VarName = "Precip") 
+        chiView("precip_map", chi.map) 
       }
       else if (input$precip_chi_zoom == "lac") {
-        lacView("precip_map", large.area, EPApoints = faa.quarterly, VarName = "Precip")
+        lacView("precip_map", large.area)
       }
     }
   })
 
   ##### PRECIPITATION END #####
+  
+  ### FORMER SVI TAB ###
   
   # output$svi_map <- renderLeaflet({
   #   leaflet() %>%
@@ -3376,8 +3349,6 @@ server <- function(input, output) {
 
   ##### DOWNLOADS END #####
   
-  
-
 }
 
 shinyApp(ui, server) 

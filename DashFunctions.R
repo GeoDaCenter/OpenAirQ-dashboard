@@ -1,4 +1,12 @@
-### Create Tab Page for Variables with Quarterly Data
+#' Generate tab for historical data with quarterly and monthly aggregations
+#' 
+#' @param tabname a string for output
+#' @param variablename a string for dataset filtering
+#' @param variabledescription a string for output
+#' @param sourcedescription a string for output
+#' @param radselect a string designating the palette scope
+#' @param mapheight a string for map size
+#' 
 generateDynaTab <- function(tabname, variablename, variabledescription, sourcedescription,
                                  radselect = "ovr", mapheight = "90vh") 
 {
@@ -40,7 +48,14 @@ generateDynaTab <- function(tabname, variablename, variabledescription, sourcede
           ))
 }
 
-### Create Tab Page for Variables with Quarterly Data
+#' Generate tab for historical data with only quarterly aggregations
+#' 
+#' @param tabname a string for output
+#' @param variablename a string for dataset filtering
+#' @param variabledescription a string for output
+#' @param sourcedescription a string for output
+#' @param mapheight a string for map size
+#' 
 generateQuarterlyTab <- function(tabname, variablename, variabledescription, sourcedescription,
                                   mapheight = "90vh") 
   {
@@ -78,9 +93,17 @@ generateQuarterlyTab <- function(tabname, variablename, variabledescription, sou
 }
 
 
-### Create Tab Page for Variables with One Time Data
+#' Generate tab for historical data with constant data
+#' 
+#' @param tabname a string for output
+#' @param variablename a string for dataset filtering
+#' @param variabledescription a string for output
+#' @param sourcedescription a string for output
+#' @param mapviewselected a string for initial map zoom
+#' @param mapheight a string for map size
+#' 
 generateOneTimeTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                               mapviewselected = "lac", mapheight = "70vh") {
+                               mapviewselected = "lac", mapheight = "90vh") {
   tabItem(tabName = tabname,
           fluidRow(
             box(width = 4,
@@ -100,12 +123,21 @@ generateOneTimeTab <- function(tabname, variablename, variabledescription, sourc
               ),
             box(width = 8,
                 leafletOutput(paste(tabname, "map", sep = "_"), height = mapheight)
-                
             )
               ))
 }
 
-##### Date Slider Output to Raster Layer Name
+#' Reformats user input from slider for dataset filtering
+#' 
+#' @param in.date the user selected date
+#' @param variable a string for dataset filtering
+#' @param period the user selected timestep
+#' 
+#' @returns a formatted string to match dataset conventions
+#' 
+#' @examples 
+#' getLayerName("2017-02-01", "PM10", "qtr") returns "PM10_1_17"
+#' getLayerName("2014-11-01", "Temp", "mon") returns "Temp_11_14" 
 getLayerName <- function(in.date, variable, period = "qtr") {
   
   in.date <- as.Date(paste0(in.date, "/01"))
@@ -114,20 +146,33 @@ getLayerName <- function(in.date, variable, period = "qtr") {
   var.yr <- year(in.date)
   
   var.qtr <- ceiling(var.month/3)
-  
   var.yr <- substring(var.yr, 3, 4) 
+  
   if(period == "qtr") {
     this.var.name <- paste(variable, var.qtr, var.yr, sep = "_")
   }
   else if (period == "mon") {
     this.var.name <- paste(variable, var.month, var.yr, sep = "_")
   }
+  return(this.var.name)
 }
 
 
-##### Generate Leaflet Map 
+#' Creates a raster for the given variable at the selected timestep
+#' Also creates a point layer for observations, if available
+#' 
+#' @param layername a formatted string of the selected date and variable
+#' @param layerpal a color palette covering the raster's range
+#' @param raster a set of rasters
+#' @param area a map
+#' @param layerId a mapping variable
+#' @param rasterOpacity a number
+#' @param EPApoints a set of point observations
+#' @param units a string for the units of the raster/point values
+#' 
+#' @returns a leaflet map with a raster layer (and point layer if provided)
 dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 0.8,
-                    EPApoints = NULL, VarName = NULL, units = "") {
+                    EPApoints = NULL, units = "") {
   
     dMap <- leaflet(layername) %>%
     addProviderTiles("OpenStreetMap.HOT") %>%
@@ -167,11 +212,22 @@ dashMap <- function(layername, layerpal, raster, area, layerId, rasterOpacity = 
                                options = pathOptions(pane = "points"))
     }
     
-    dMap
+    return(dMap)
 }
 
-##### For use in observe function with slider
 
+#' Clears the existing map layers and adds new layers based on change
+#' in user selected timestep
+#' 
+#' @param mapname the leaflet map to update
+#' @param layername a formatted string of the selected date and variable
+#' @param layerpal a color palette covering the raster's range
+#' @param raster a set of rasters
+#' @param area a map
+#' @param layerId a mapping variable
+#' @param rasterOpacity a number
+#' @param EPApoints a set of point observations
+#' @param units a string for the units of the raster/point values
 sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.8, units = "", EPApoints = NULL) {
   leafletProxy(mapname) %>%
     clearControls() %>%
@@ -207,10 +263,11 @@ sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.
 }
 
 
-##### Zoom on click 
-# Proxy: Leaflet map name
-# Click: Click input
-# Area: Polygons
+#' Updates leaflet map at county level based on user click input
+#' 
+#' @param proxy leaflet map
+#' @param click user click input
+#' @param area polygon layer for map
 zoomMap <- function(proxy, click, area) {
   this.proxy <- leafletProxy(proxy)
   fips <- click$id
@@ -237,7 +294,11 @@ zoomMap <- function(proxy, click, area) {
 }
 
 
-
+#' Updates leaflet map at city level based on user click input
+#' 
+#' @param proxy leaflet map
+#' @param click user click input
+#' @param area polygon layer for map
 zoomChiMap <- function(proxy, click, area) {
   
   this.proxy <- leafletProxy(proxy)
@@ -274,7 +335,11 @@ zoomChiMap <- function(proxy, click, area) {
   }
 }
 
-chiView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
+#' Zooms leaflet map to city
+#' 
+#' @param proxy leaflet map
+#' @param area polygon layer for city
+chiView <- function(proxy, area) {
   
   this.proxy <- leafletProxy(proxy)
   this.proxy <- this.proxy %>%
@@ -297,7 +362,11 @@ chiView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
   this.proxy
 }
 
-lacView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
+#' Zooms leaflet map to counties
+#' 
+#' @param proxy leaflet map
+#' @param area polygon layer for counties
+lacView <- function(proxy, area) {
   
   this.proxy <- leafletProxy(proxy)
   this.proxy <- this.proxy %>%
@@ -320,15 +389,17 @@ lacView <- function(proxy, area, EPApoints = NULL, VarName = NULL) {
   
 }
 
-
-
-
-
-#Creates palette
-#qtr: Palette covers single quarter
-#ovr: Palette covers entire 5 year period (input "AOD", "NDVI", etc)
-#pt.bounds: Extends palette to capture sensor readings above or below raster bounds
-
+#' Creates a color palette for mapping based on select timeframe
+#' 
+#' @param layername a formatted string of the selected date and variable
+#' @param style the timeframe of values to consider
+#'  'ovr' = all values, 'yr' = selected calendar year, 'qtr'/'mon' = selected quarter/month
+#' @param colors general colors to range
+#' @param raster set of rasters
+#' @param nacolor color value for missing values
+#' @param pt.bounds extensions to domain of color bounds
+#' 
+#' @returns a color palette for mapping
 palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow", "orange", "red"), 
                          raster, nacolor = "transparent", pt.bounds = NULL) {
   if(style == "qtr" || style == "mon") {
@@ -365,11 +436,10 @@ palFromLayer <- function(layername, style = "ovr", colors = c("green", "yellow",
     max = max(max, pt.bounds[2])
 
   inc <- (max - min) / 10 
-    
   breaks <- seq(from = min, to = max, inc)
-    
-  pal <- colorNumeric(colors, breaks, na.color = nacolor) 
-
+  pal <- colorNumeric(colors, breaks, na.color = nacolor)
+  
+  return(pal)
 }
 
 #Create palettes from PM2.5 layer --> easy to modify to make layername an argument
@@ -407,7 +477,8 @@ palFromVectorLayer <- function(filtereddata, completedata, style = "ovr",
 
 
 
-### Converts column to HTML labels; maps NA values to their date of last update
+#' Converts column values to HTML labels. Maps NAs to last updated value
+#' 
 getLabels <- function(date, dataframe, varname) {
   col.format <- paste(varname, "%Y%m%d", sep = "_")
   idx <- which(colnames(dataframe) == format(date, col.format))
@@ -428,6 +499,11 @@ getLabels <- function(date, dataframe, varname) {
 }
 
 
+#' Switches slider timesteps between monthly/quarterly options
+#' 
+#' @param res the user-selected timestep length
+#' 
+#' @returns a list of quarter or month separated dates and a new palette button title
 switchTimeRes <- function(res){
   
   new_vals = list()
@@ -448,6 +524,12 @@ switchTimeRes <- function(res){
   return(new_vals)
 }
 
+#' Formats selected date and legend for density plot
+#' 
+#' @param date the user-selected date
+#' @param res the user-selected timestep length
+#' 
+#' @returns a string for the legend, and a formatted date for the plot
 densityPlotLabels <- function(date, res){
   date = paste0(date,"/01")
   labels = vector()
@@ -463,7 +545,15 @@ densityPlotLabels <- function(date, res){
   return(labels)
 }
 
-
+#' Creates a density plot comparing the user-selected date observations to all other observations
+#' 
+#' @param date the user-selected date
+#' @param varname the tab variable
+#' @param res the user-selected timestep length
+#' @param points a dataset of observations
+#' @param xlab a formatted plot label
+#' 
+#' @returns a density plot
 density_plot <- function(date, varname, res, points, xlab){
   
   this.name <- getLayerName(date, varname, period = res)
@@ -471,15 +561,25 @@ density_plot <- function(date, varname, res, points, xlab){
   
   full_points <- gather(st_drop_geometry(points[which(grepl(varname, names(points)))]))
   
-  ggplot(full_points) + geom_density(aes(value, fill = (key == this.name)), alpha = 0.6) + 
+  dens <- ggplot(full_points) + geom_density(aes(value, fill = (key == this.name)), alpha = 0.6) + 
     theme_tufte(base_size = 15) + 
     theme(legend.position = c(.87, .87)) + 
     labs(y = "Density", x = paste0(varname, " (", xlab, ")"), fill = "", title = "Distribution Comparison") + 
     scale_fill_manual(labels = labels, values = c("grey", "red")) 
+  
+  return(dens)
 }
 
 
-
+#' Creates a boxplot comparing the user-selected date observations to all other observations
+#' 
+#' @param date the user-selected date
+#' @param varname the tab variable
+#' @param res the user-selected timestep length
+#' @param points a dataset of observations
+#' @param ylab a formatted plot label
+#' 
+#' @returns a boxplot
 boxplot_dist <- function(date, varname, res, points, ylab){
   
   this.name <- getLayerName(date, varname, period = res)
@@ -488,15 +588,26 @@ boxplot_dist <- function(date, varname, res, points, ylab){
   full_points <- gather(st_drop_geometry(points[which(grepl(varname, names(points)))]))
 
   
-  ggplot(full_points) + geom_boxplot(aes(y = value, x = (key == this.name), fill = (key == this.name)), alpha = 0.6) + 
+  box <- ggplot(full_points) + geom_boxplot(aes(y = value, x = (key == this.name), fill = (key == this.name)), alpha = 0.6) + 
     theme_tufte(base_size = 15) + 
     theme(legend.position = "none") + 
     labs(y = paste0(varname, " (", ylab, ")"), x = "", fill = "", title = "Distribution Comparison") +
     scale_x_discrete(labels = labels) + 
     scale_fill_manual(labels = labels, values = c("grey", "red"))
+  
+  return(box)
 }
 
-
+#' Creates a time series plot of the full set of observations. Draws a line at 
+#' the current user-selected month/quarter
+#' 
+#' @param in.date the user-selected date
+#' @param varname the tab variable
+#' @param res the user-selected timestep length
+#' @param points a dataset of observations
+#' @param ylab a formatted date for the plot labels
+#' 
+#' @returns a time series plot
 time_plot <- function(in.date, varname, res, points, ylab){
   
   full_points <- st_drop_geometry(points[which(grepl(varname, names(points)))])
@@ -516,8 +627,10 @@ time_plot <- function(in.date, varname, res, points, ylab){
     in.date = as.yearqtr(in.date, "%Y/%m")
   }
   
-  ggplot(full_points) + geom_line(aes(x = date, y = value, group = Location), alpha = 0.1) +
+  tplot <- ggplot(full_points) + geom_line(aes(x = date, y = value, group = Location), alpha = 0.1) +
     theme_tufte(base_size = 15) + 
     labs(y = ylab, x = "Date", title = "Sensor Readings Over Time") + 
     geom_vline(xintercept = in.date, color = "red")
+  
+  return(tplot)
 }
