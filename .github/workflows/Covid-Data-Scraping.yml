@@ -38,6 +38,7 @@ jobs:
         run: |
           git config --local user.name "qiweilin@uchicago.edu"
           git config --local user.name "QWL55"
+          git pull
           git add --all
           git commit -am "Scraping Covid Data"
           git push

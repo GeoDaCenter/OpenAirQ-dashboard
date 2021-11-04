@@ -10,8 +10,8 @@ name: Automatic Air Quality Data Scraping
 
 on:
   schedule:
-  # UCT time
-    - cron: '30 12 * * *'
+  # UCT time (testing now)
+    - cron: '30 15 * * *'
 
 jobs:
   build:
@@ -40,6 +40,7 @@ jobs:
         run: |
           git config --local user.name "qiweilin@uchicago.edu"
           git config --local user.name "QWL55"
+          git pull
           git add --all
           git commit -am "Scraping Air Quality Data"
           git push
