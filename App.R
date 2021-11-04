@@ -57,11 +57,10 @@ pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
 week.idx<- read.csv("Data/Week_Index.csv")$x
 pm25.trace<- read.csv("Data/PM25_Weekly/pm25_trace.csv")$x
 aqi<- read.csv("Data/PM25_Weekly/aqi.csv")
-aqi.means<- read.csv("Data/PM25_Weekly/aqi_means.csv")
-aqi.trace<- read.csv("Data/PM25_Weekly/aqi_trace.csv")$x
+aqi.trace<- rev(read.csv("Data/PM25_Weekly/aqi_means.csv")[, -1])
 covid.raw<- read.csv("Data/COVID/CovidWeekly.csv")
 covid.means<- read.csv("Data/COVID/covid_means.csv", row.names=1)
-covid.trace<- read.csv("Data/COVID/covid_trace.csv")$x
+covid.trace<- rev(covid.means[, -1])
 asthma.raw<- read.csv("Data/COVID/Asthma2017.csv")
 
 covid<- st_read("Data/COVID/covid.geojson")
@@ -691,10 +690,10 @@ ui <- dashboardPage(
                                 "Social Vulnerability Index" = "svi",
                                 "None" = "none"),
                               selected = "covid"),
-                  leafletOutput("covid_map_right", height = mapheight))),
+                  leafletOutput("covid_map_right", height = mapheight)))),
           
-      fluidRow(box(width = 12,
-                   plotlyOutput("covid_plot", height = mapheight)))),
+      # fluidRow(box(width = 12,
+      #              plotlyOutput("covid_plot", height = mapheight)))),
       
     
     
@@ -1518,114 +1517,114 @@ server <- function(input, output) {
       right.controls
     
   })
-  output$covid_plot <- renderPlotly({
-    dates <- format(strptime(rownames(covid.means), "COVID_Week_%Y%m%d"), "%Y-%m-%d")
-    blues <- c("#033682", "#0356a3", "#0083d9", "#66ccff", "#c9e8ff")
-    reds <- c("#9c1500", "#f52302", "#ff6e57", "#ff9a8a", "#ffc8bf")
-    greens <- c("#165422", "#0b9926", "#14ff41", "#91faa5", "#d6ffde")
-    
-    p <- plot_ly() %>% config(displayModeBar = F) %>%
-      layout(legend = list(x = .5, y = 100, orientation = "h"),
-             shapes = list(list(type = "line", y0 = 0, y1 = 1, xref = "x", yref = "paper",
-                                x0 = which(dates == format(input$covid_dt, "%Y-%m-%d")) - 1,
-                                x1 = which(dates == format(input$covid_dt, "%Y-%m-%d")) - 1,
-                                line = list(color = "darkgrey", dash = "dash"))))%>%
-      add_trace(x = dates,
-                y = covid.trace,
-                type = "scatter",
-                mode = "lines",
-                opacity = 1,
-                line = list(dash = "solid", color = blues[1]),
-                name = paste("Average", "COVID cases / zip code", sep = " "),
-                text = paste("Average", "COVID cases / zip code", sep = " ")) %>%
-      add_trace(x = dates,
-                y = aqi.trace,
-                type = "scatter",
-                mode = "lines",
-                opacity = 1,
-                line = list(dash = "solid", color = greens[1]),
-                name = paste("Average", "AQI / sensor", sep = " "),
-                text = paste("Average", "AQI / sensor", sep = " ")) %>%
-      add_trace(x = dates,
-                y = pm25.trace,
-                type = "scatter",
-                mode = "lines",
-                opacity = 1,
-                line = list(dash = "solid", color = reds[1]),
-                name = paste("Average", "PM2.5 / sensor", "(ug/m3)", sep = " "),
-                text = paste("Average", "PM2.5 / sensor", "(ug/m3)", sep = " "))
-    
-    if (length(all.fips$fips) > 0) {
-      for (i in 1:length(all.fips$fips)) {
-        p <- p %>%
-          add_trace(x = dates,
-                    y = as.numeric(covid.raw[which(grepl(all.fips$fips[i], covid.raw$zip)), ncol(covid.raw):(3)]),
-                    type = "scatter",
-                    mode = "lines",
-                    opacity = 0.8,
-                    line = list(dash = "dot", color = blues[(i %% length(blues)) + 1]),
-                    name = paste("COVID cases in", all.fips$fips[i], sep = " "),
-                    text = paste("COVID cases in", all.fips$fips[i], sep = " "))
-      }
-    }
-    if (length(all.sensors$sensors) > 0) {
-      for (i in 1:length(all.sensors$sensors)) {
-        p <- p %>%
-          add_trace(x = dates,
-                    # +6 offsets week.idx to match full data frame
-                    y = as.numeric(aqi[which(grepl(all.sensors$sensors[i], aqi$Site.ID)), (week.idx + 6)]),
-                    type = "scatter",
-                    mode = "lines",
-                    opacity = 0.8,
-                    line = list(dash = "dot", color = greens[(i %% length(greens)) + 1]),
-                    name = paste("AQI at", 
-                                 aqi$name[which(grepl(all.sensors$sensors[i], aqi$Site.ID))], 
-                                 "sensor", sep = " "),
-                    text = paste("AQI at", 
-                                 aqi$name[which(grepl(all.sensors$sensors[i], aqi$Site.ID))], 
-                                 "sensor", sep = " "))
-        p <- p %>%
-          add_trace(x = dates,
-                    # +6 offsets week.idx to match full data frame
-                    y = as.numeric(pm25[which(grepl(all.sensors$sensors[i], pm25$Site.ID)), (week.idx + 6)]),
-                    type = "scatter",
-                    mode = "lines",
-                    opacity = 0.8,
-                    line = list(dash = "dot", color = reds[(i %% length(reds)) + 1]),
-                    name = paste("PM2.5 at", 
-                                 pm25$name[which(grepl(all.sensors$sensors[i], pm25$Site.ID))], 
-                                 "sensor", "(ug/m3)", sep = " "),
-                    text = paste("PM2.5 at", 
-                                 pm25$name[which(grepl(all.sensors$sensors[i], pm25$Site.ID))], 
-                                 "sensor", "(ug/m3)", sep = " "))
-      }
-    }
-    
-    p
-  })
-  
-  observeEvent(input$covid_map_left_shape_click, { # update reactive values on click
-    if(input$sidebar == "covid") {
-      if(typeof(input$covid_map_left_shape_click$id) == "character" &&
-         str_length(input$covid_map_left_shape_click$id) == 5) { # zip code
-        all.fips$fips <- unique(c(all.fips$fips, input$covid_map_left_shape_click$id))
-      }
-      else if(typeof(input$covid_map_left_shape_click$id) == "integer") { # sensor id
-        all.sensors$sensors <- unique(c(all.sensors$sensors, input$covid_map_left_shape_click$id))
-      }
-    }
-  })
-  observeEvent(input$covid_map_right_shape_click, { # update reactive values on click
-    if(input$sidebar == "covid") {
-      if(typeof(input$covid_map_right_shape_click$id) == "character" &&
-         str_length(input$covid_map_right_shape_click$id) == 5) { # zip code
-        all.fips$fips <- unique(c(all.fips$fips, input$covid_map_right_shape_click$id))
-      }
-      else if(typeof(input$covid_map_right_shape_click$id) == "integer") { # sensor id
-        all.sensors$sensors <- unique(c(all.sensors$sensors, input$covid_map_right_shape_click$id))
-      }
-    }
-  })
+  # output$covid_plot <- renderPlotly({
+  #   dates <- format(strptime(rownames(covid.means), "COVID_Week_%Y%m%d"), "%Y-%m-%d")
+  #   blues <- c("#033682", "#0356a3", "#0083d9", "#66ccff", "#c9e8ff")
+  #   reds <- c("#9c1500", "#f52302", "#ff6e57", "#ff9a8a", "#ffc8bf")
+  #   greens <- c("#165422", "#0b9926", "#14ff41", "#91faa5", "#d6ffde")
+  #   
+  #   p <- plot_ly() %>% config(displayModeBar = F) %>%
+  #     layout(legend = list(x = .5, y = 100, orientation = "h"),
+  #            shapes = list(list(type = "line", y0 = 0, y1 = 1, xref = "x", yref = "paper",
+  #                               x0 = which(dates == format(input$covid_dt, "%Y-%m-%d")) - 1,
+  #                               x1 = which(dates == format(input$covid_dt, "%Y-%m-%d")) - 1,
+  #                               line = list(color = "darkgrey", dash = "dash"))))%>%
+  #     add_trace(x = dates,
+  #               y = covid.trace,
+  #               type = "scatter",
+  #               mode = "lines",
+  #               opacity = 1,
+  #               line = list(dash = "solid", color = blues[1]),
+  #               name = paste("Average", "COVID cases / zip code", sep = " "),
+  #               text = paste("Average", "COVID cases / zip code", sep = " ")) %>%
+  #     add_trace(x = dates,
+  #               y = aqi.trace,
+  #               type = "scatter",
+  #               mode = "lines",
+  #               opacity = 1,
+  #               line = list(dash = "solid", color = greens[1]),
+  #               name = paste("Average", "AQI / sensor", sep = " "),
+  #               text = paste("Average", "AQI / sensor", sep = " ")) %>%
+  #     add_trace(x = dates,
+  #               y = pm25.trace,
+  #               type = "scatter",
+  #               mode = "lines",
+  #               opacity = 1,
+  #               line = list(dash = "solid", color = reds[1]),
+  #               name = paste("Average", "PM2.5 / sensor", "(ug/m3)", sep = " "),
+  #               text = paste("Average", "PM2.5 / sensor", "(ug/m3)", sep = " "))
+  #   
+  #   if (length(all.fips$fips) > 0) {
+  #     for (i in 1:length(all.fips$fips)) {
+  #       p <- p %>%
+  #         add_trace(x = dates,
+  #                   y = as.numeric(covid.raw[which(grepl(all.fips$fips[i], covid.raw$zip)), ncol(covid.raw):(3)]),
+  #                   type = "scatter",
+  #                   mode = "lines",
+  #                   opacity = 0.8,
+  #                   line = list(dash = "dot", color = blues[(i %% length(blues)) + 1]),
+  #                   name = paste("COVID cases in", all.fips$fips[i], sep = " "),
+  #                   text = paste("COVID cases in", all.fips$fips[i], sep = " "))
+  #     }
+  #   }
+  #   if (length(all.sensors$sensors) > 0) {
+  #     for (i in 1:length(all.sensors$sensors)) {
+  #       p <- p %>%
+  #         add_trace(x = dates,
+  #                   # +6 offsets week.idx to match full data frame
+  #                   y = as.numeric(aqi[which(grepl(all.sensors$sensors[i], aqi$Site.ID)), (week.idx + 6)]),
+  #                   type = "scatter",
+  #                   mode = "lines",
+  #                   opacity = 0.8,
+  #                   line = list(dash = "dot", color = greens[(i %% length(greens)) + 1]),
+  #                   name = paste("AQI at", 
+  #                                aqi$name[which(grepl(all.sensors$sensors[i], aqi$Site.ID))], 
+  #                                "sensor", sep = " "),
+  #                   text = paste("AQI at", 
+  #                                aqi$name[which(grepl(all.sensors$sensors[i], aqi$Site.ID))], 
+  #                                "sensor", sep = " "))
+  #       p <- p %>%
+  #         add_trace(x = dates,
+  #                   # +6 offsets week.idx to match full data frame
+  #                   y = as.numeric(pm25[which(grepl(all.sensors$sensors[i], pm25$Site.ID)), (week.idx + 6)]),
+  #                   type = "scatter",
+  #                   mode = "lines",
+  #                   opacity = 0.8,
+  #                   line = list(dash = "dot", color = reds[(i %% length(reds)) + 1]),
+  #                   name = paste("PM2.5 at", 
+  #                                pm25$name[which(grepl(all.sensors$sensors[i], pm25$Site.ID))], 
+  #                                "sensor", "(ug/m3)", sep = " "),
+  #                   text = paste("PM2.5 at", 
+  #                                pm25$name[which(grepl(all.sensors$sensors[i], pm25$Site.ID))], 
+  #                                "sensor", "(ug/m3)", sep = " "))
+  #     }
+  #   }
+  #   
+  #   p
+  # })
+  # 
+  # observeEvent(input$covid_map_left_shape_click, { # update reactive values on click
+  #   if(input$sidebar == "covid") {
+  #     if(typeof(input$covid_map_left_shape_click$id) == "character" &&
+  #        str_length(input$covid_map_left_shape_click$id) == 5) { # zip code
+  #       all.fips$fips <- unique(c(all.fips$fips, input$covid_map_left_shape_click$id))
+  #     }
+  #     else if(typeof(input$covid_map_left_shape_click$id) == "integer") { # sensor id
+  #       all.sensors$sensors <- unique(c(all.sensors$sensors, input$covid_map_left_shape_click$id))
+  #     }
+  #   }
+  # })
+  # observeEvent(input$covid_map_right_shape_click, { # update reactive values on click
+  #   if(input$sidebar == "covid") {
+  #     if(typeof(input$covid_map_right_shape_click$id) == "character" &&
+  #        str_length(input$covid_map_right_shape_click$id) == 5) { # zip code
+  #       all.fips$fips <- unique(c(all.fips$fips, input$covid_map_right_shape_click$id))
+  #     }
+  #     else if(typeof(input$covid_map_right_shape_click$id) == "integer") { # sensor id
+  #       all.sensors$sensors <- unique(c(all.sensors$sensors, input$covid_map_right_shape_click$id))
+  #     }
+  #   }
+  # })
   
   ##### COVID END #####
   
