@@ -791,25 +791,40 @@ ui <- dashboardPage(
             fluidRow(
               box(width = 4,
                   h3("CSV", align = "center"),
-                  downloadBttn("monthly_data",
-                               label = "Download Monthly County Data",
+                  downloadBttn("monthly_epa_data",
+                               label = "Download Monthly EPA Data",
                                style = "simple"),
-                  downloadBttn("quarterly_data",
-                               label = "Download Quarterly County Data",
+                  downloadBttn("quarterly_epa_data",
+                               label = "Download Quarterly EPA Data",
+                               style = "simple"),
+                  downloadBttn("monthly_faa_data",
+                               label = "Download Monthly FAA Data",
+                               style = "simple"),
+                  downloadBttn("quarterly_faa_data",
+                               label = "Download Quarterly FAA Data",
                                style = "simple")),
               box(width = 4,
                   h3("Raster", align = "center"),
                   p("Warning: requires processing time", align = "center"),
-                  downloadBttn("master_raster",
-                               label = "Download 1km Quarterly Raster",
-                               style = "simple"),
                   downloadBttn("monthly_raster",
                                label = "Download 1km Monthly Raster", 
+                               style = "simple"),
+                  downloadBttn("master_raster",
+                               label = "Download 1km Quarterly Raster",
                                style = "simple")),
               box(width = 4,
-                  h3("Shapefile", align = "center"),
-                  downloadBttn("large_area_counties",
-                               label = "Download County Shapefile",
+                  h3("GeoJSON", align = "center"),
+                  downloadBttn("monthly_epa_data_geo",
+                               label = "Download Monthly EPA Data",
+                               style = "simple"),
+                  downloadBttn("quarterly_epa_data_geo",
+                               label = "Download Quarterly EPA Data",
+                               style = "simple"),
+                  downloadBttn("monthly_faa_data_geo",
+                               label = "Download Monthly FAA Data",
+                               style = "simple"),
+                  downloadBttn("quarterly_faa_data_geo",
+                               label = "Download Quarterly FAA Data",
                                style = "simple"))
             ))
     
@@ -3272,14 +3287,66 @@ server <- function(input, output) {
   
   ##### DOWNLOADS START #####
   
-  output$monthly_data <- downloadHandler(filename = "county_averages_monthly.csv", 
-                                         content = function(file){
-                                           write.csv(county.avgs, file)})
+  # epa.quarterly <- st_read("Data/EPA_Quarterly.geojson")
+  # faa.quarterly <- st_read("Data/FAA_Quarterly.geojson")
+  # 
+  # epa.monthly <- st_read("Data/EPA_Monthly.geojson")
+  # faa.monthly <- st_read("Data/FAA_Monthly.geojson")
   
-  output$quarterly_data <- downloadHandler(filename = "county_averages_quarterly.csv", 
-                                           content = function(file) {
-                                             file.copy("Data/county_averages_quarterly.csv", file)
-                                           })
+  # downloadBttn("monthly_epa_data",
+  #              label = "Download Monthly EPA Data",
+  #              style = "simple"),
+  # downloadBttn("quarterly_epa_data",
+  #              label = "Download Quarterly EPA Data",
+  #              style = "simple"),
+  # downloadBttn("monthly_faa_data",
+  #              label = "Download Monthly FAA Data",
+  #              style = "simple"),
+  # downloadBttn("quarterly_faa_data",
+  
+  output$monthly_epa_data <- downloadHandler(filename = "epa_monthly.csv", 
+                                             content = function(file){
+                                               cbind(st_drop_geometry(epa.monthly), st_coordinates(epa.monthly)) %>%
+                                                 write.csv(file)
+                                             })
+  
+  output$quarterly_epa_data <- downloadHandler(filename = "epa_quarterly.csv", 
+                                             content = function(file){
+                                               cbind(st_drop_geometry(epa.quarterly), st_coordinates(epa.quarterly)) %>%
+                                                 write.csv(file)
+                                             })
+  
+  output$monthly_faa_data <- downloadHandler(filename = "faa_monthly.csv", 
+                                             content = function(file){
+                                               cbind(st_drop_geometry(faa.monthly), st_coordinates(faa.monthly)) %>%
+                                                 write.csv(file)
+                                             })
+  
+  output$quarterly_faa_data <- downloadHandler(filename = "faa_quarterly.csv", 
+                                             content = function(file){
+                                               cbind(st_drop_geometry(faa.quarterly), st_coordinates(faa.quarterly)) %>%
+                                                 write.csv(file)
+                                             })
+  
+  output$monthly_epa_data_geo <- downloadHandler(filename = "epa_monthly.geojson", 
+                                                 content = function(file) {
+                                                   file.copy("Data/EPA_Monthly.geojson", file)
+                                                 })
+  
+  output$quarterly_epa_data_geo <- downloadHandler(filename = "epa_quarterly.geojson", 
+                                                   content = function(file) {
+                                                     file.copy("Data/EPA_Quarterly.geojson", file)
+                                                   })
+  
+  output$monthly_faa_data_geo <- downloadHandler(filename = "faa_monthly.geojson", 
+                                                 content = function(file) {
+                                                   file.copy("Data/FAA_Monthly.geojson", file)
+                                                 })
+  
+  output$quarterly_faa_data_geo <- downloadHandler(filename = "faa_quarterly.geojson", 
+                                                   content = function(file) {
+                                                     file.copy("Data/FAA_Quarterly.geojson", file)
+                                                   })
   
   output$master_raster  <- downloadHandler(
     filename = "Master_Raster.zip",
