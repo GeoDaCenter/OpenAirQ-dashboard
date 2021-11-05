@@ -3,6 +3,7 @@ library(dplyr)
 library(RSocrata)
 library(geojsonio)
 
+# This scripts scrape up-to-date Covid Data
 
 ### Scrape COVID data from Chicago data Portal
 covid_chicago <- read.socrata("https://data.cityofchicago.org/resource/yhhz-zm2v.json")
@@ -19,8 +20,8 @@ covid_raw <- covid_chicago %>%
   rename(zip = zip_code) %>% 
   filter(zip != "Unknown")
 
+# clean up variable names
 zipcode <- covid_raw$zip
-
 covid <- dplyr::select(covid_raw, -zip)
 colnames(covid) <- gsub("-", "", colnames(covid))
 colnames(covid) <- paste0('COVID_Week_', colnames(covid))

@@ -5,13 +5,16 @@ library(jsonlite)
 library(stringr)
 library(lubridate)
 
-setwd("E:/Spatial DS RA/OpenAirQ-dashboard/Data/PM25_Weekly/Historical/")
+# This script cleans and merges existing data in the repo
+# It only needs to run once locally
+
+#setwd("E:/Spatial DS RA/OpenAirQ-dashboard/Data/PM25_Weekly/Historical/")
 select <- dplyr::select
 #---read and process newly acquired data since march
 past_files <- list.files(pattern="*.json")
 
 process <- function(f_name){
-  
+  # this function reads in a dataset in json format and process it 
   data <- fromJSON(f_name) %>% 
     rename(`Site ID` = FullAQSCode) %>%
     mutate(is_last_day = str_detect(UTC, pattern = 'T0[0-4]'),
@@ -99,7 +102,7 @@ pm_combo <- pm_wide %>%
 write.csv(pm_combo, file = "../pm25.csv", row.names = F)
 
 # aqi: combine wide data
-aqi_old <- read.csv(paste0(path_to_data, "AQI.csv"))
+aqi_old <- read.csv("../AQI.csv")
 
 aqi_combo <- aqi_wide %>% 
   mutate(`Site ID` = as.numeric(`Site ID`)) %>% 
@@ -108,6 +111,6 @@ aqi_combo <- aqi_wide %>%
   relocate(c("COUNTY", "latitude", "longitude", "name"), 
            .after = 'Site.ID')
 
-write.csv(aqi_combo, file = paste0(path_to_data, "AQI.csv"))
+write.csv(aqi_combo, file = "../AQI.csv")
 
 write.csv(aqi_combo, file = "../aqi.csv", row.names = F)
