@@ -546,11 +546,8 @@ ui <- dashboardPage(
               box(width = 4,
                   helpText("Select one or multiple counties for comparison of regional trends."),
                   leafletOutput("homemap", height = mapheight),
-                  checkboxGroupInput("homecheck", label = "", c("Show Mean" = "mean",
-                                                                "Rescale Data" = "rescale"),
-                                     selected = c("mean"),
-                                     width = '100%',
-                                     inline = TRUE)),
+                  actionButton("clearshapes", "Clear Selection")
+                  ),
               box(width = 8,
                   selectizeInput("homevar", "Select Variables for Comparison:",
                                  c("Aerosol Optical Depth" = "AOD",
@@ -566,9 +563,22 @@ ui <- dashboardPage(
                                    "Temperature" = "Temp",
                                    "Barometric Pressure" = "Pressure"),
                                  options = list(maxItems = 7)),
-                  plotlyOutput("homeplot", height = 445),
-                  actionButton("clearshapes", "Clear Selection")))
-            ),
+                  plotlyOutput("homeplot", height = 500),
+                  column(width = 2,
+                         checkboxGroupInput("homecheck", label = "", 
+                                            choices = c("Show Mean" = "mean",
+                                              "Rescale Data" = "rescale"),
+                                            selected = c("mean"),
+                                            width = '100%',
+                                            inline = TRUE)),
+                  column(width = 10,
+                         sliderTextInput("timeBounds", "Select Time Bounds:",
+                                         choices = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="month"),
+                                                          "%Y/%m"),
+                                         selected = c("2014/01", "2018/12"), grid = FALSE)),
+                  column(width = 12,
+                         plotlyOutput("distplot", height = 500)))
+            )),
 
     ##### REGION EXPLORER END #####
 
@@ -947,17 +957,6 @@ server <- function(input, output) {
       p
       return()
     }
-
-    these.vars.avgs <- list()
-    
-    for(i in 1:length(vars)) {
-      these.vars.avgs[[i]] <- var.avgs[which(grepl(vars[i], names(var.avgs)))]
-      
-      if ("rescale" %in% input$homecheck) {
-        these.vars.avgs[[i]] <- rescale(these.vars.avgs[[i]])
-      }
-    }
-    
     
     months <- 1:12
     years <- 2014:2018
@@ -969,6 +968,23 @@ server <- function(input, output) {
       
     }
     dates <- mdy(as.character(dates))
+    
+    start = which(dates == ym(input$timeBounds[[1]]))
+    end = which(dates == ym(input$timeBounds[[2]]))
+    dates = dates[start:end]
+    
+    these.vars.avgs <- list()
+    
+    for(i in 1:length(vars)) {
+      these.vars.avgs[[i]] <- var.avgs[which(grepl(vars[i], names(var.avgs)))][start:end]
+      
+      if ("rescale" %in% input$homecheck) {
+        these.vars.avgs[[i]] <- rescale(these.vars.avgs[[i]])
+      }
+    }
+    
+    
+   
     
     highlighted <- all.fips$fips
     
@@ -1031,6 +1047,127 @@ server <- function(input, output) {
     p
   })
   
+  output$distplot <- renderPlotly({
+    
+    ##### Transform averages into plotly friendly format
+    vars <- input$homevar
+    
+    if(is.null(vars)){
+      p <- plot_ly() %>% config(displayModeBar = F) %>%
+        layout(legend = list(x = .5, y = 100, orientation = "h"))
+      p
+      return()
+    }
+    
+    months <- 1:12
+    years <- 2014:2018
+    dates <- c()
+    
+    for(i in 1:length(years)) {
+      this.yr <- paste(months, "01", years[i], sep = "-")
+      dates <- c(dates, this.yr)
+      
+    }
+    dates <- mdy(as.character(dates))
+    
+    start = which(dates == ym(input$timeBounds[[1]]))
+    end = which(dates == ym(input$timeBounds[[2]]))
+    
+    these.vars.avgs <- list()
+    
+    for(i in 1:(min(2,length(vars)))) {
+      these.vars.avgs[[i]] <- var.avgs[which(grepl(vars[i], names(var.avgs)))][start:end]
+      if ("rescale" %in% input$homecheck) {
+        these.vars.avgs[[i]] <- rescale(these.vars.avgs[[i]])
+      }
+    }
+    
+    highlighted <- all.fips$fips
+    
+    if(length(all.fips$fips == 0)) {
+      selected.fips <- 0
+    }
+    
+    selected.fips <- which(county.avgs$FIPS %in% all.fips$fips)
+    
+    blues <- c("#033682", "#0356a3", "#0083d9", "#66ccff", "#c9e8ff")
+    reds <- c("#9c1500", "#f52302", "#ff6e57", "#ff9a8a", "#ffc8bf")
+    greens <- c("#165422", "#0b9926", "#14ff41", "#91faa5", "#d6ffde")
+    yellows <- c("#8f8a00", "#d4cc04", "#faf005", "#f5f190", "#faf8c3")
+    grays <- c("#343d46", "#4f5b66", "#65737e", "#a7adba", "#c0c5ce")
+    
+    colors <- data.frame(blues, reds, greens, yellows, grays)
+    
+    home.checkbox <- ("mean" %in% input$homecheck)
+    
+    if (length(vars) ==1){
+      p <- plot_ly(alpha = 0.6, type = "violin") %>% config(displayModeBar = F) %>%
+        layout(legend = list(x = .5, y = 100, orientation = "h"))
+      
+      if(home.checkbox == T) { # Add overall variable mean line
+        p <- add_trace(p,
+                       y = these.vars.avgs[[1]],
+                       name = paste("Average", vars, sep = " "),
+                       text= paste("Average", vars, sep = " "))
+      }
+      if(length(selected.fips) != 0) { # Add county variable mean line
+        for(j in 1:length(selected.fips)) {
+          if("rescale" %in% input$homecheck) {
+            p <- add_trace(p,
+                           y = rescale(as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[i]])])),
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
+                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+          } else {
+            p <- add_trace(p,
+                           y = as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[i]])]),
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
+                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+          }
+        }}
+      p %>% layout(showlegend = FALSE)
+    }
+    
+    else if (length(vars) >= 2){
+      p <- plot_ly(alpha = 0.6, type = "scatter") %>% config(displayModeBar = F) %>%
+        layout(legend = list(x = .5, y = 100, orientation = "h"))
+      if(home.checkbox == T) { # Add overall variable mean line
+        p <- add_trace(p,
+                       x = these.vars.avgs[[1]],
+                       y = these.vars.avgs[[2]],
+                       type = "scatter",
+                       mode = "markers",
+                       opacity = 1,
+                       marker = list(color = colors[1,i]),
+                       name = "Average",
+                       text= "Average")
+      }
+      if(length(selected.fips) != 0) { # Add county variable mean line
+        for(j in 1:length(selected.fips)) {
+          if("rescale" %in% input$homecheck) {
+            p <- add_trace(p,
+                           x = rescale(as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[1]])])),
+                           y = rescale(as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[2]])])),
+                           type = "scatter",
+                           mode = "markers",
+                           opacity = .5,
+                           marker = list(color = colors[j+1,1]),
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
+                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+          } else {
+            p <- add_trace(p,
+                           x = as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[1]])]),
+                           y = as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[2]])]),
+                           type = "scatter",
+                           mode = "markers",
+                           opacity = .5,
+                           marker = list(color = colors[j+1, 1]),
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
+                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+          }
+        }}
+      p %>% layout(xaxis = list(title = vars[[1]]), yaxis = list(title = vars[[2]]))
+    }
+  })
 
   ##### HOME END #####
 
