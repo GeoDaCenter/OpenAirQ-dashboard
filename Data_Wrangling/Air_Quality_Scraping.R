@@ -4,23 +4,18 @@ library(jsonlite)
 library(stringr)
 library(lubridate)
 
-
-#setwd('E:/Spatial DS RA/Action-Testing/Data_Wrangling/')
 path_to_data <- "Data/PM25_Weekly/"
 
-# pm25: combine wide data
+# read in existing data
 pm25_old <- read.csv(paste0(path_to_data, "pm25.csv"))
-# aqi: combine wide data
 aqi_old <- read.csv(paste0(path_to_data, "aqi.csv"))
 
-# setup
-# Read in the most recent day to identify the start day
+# identify the most recent day for which data is available
 most_recent_date <- str_extract(names(aqi_old), "[0-9]{3,}") %>% 
   na.omit() %>% first() %>% ymd()
 last_day = most_recent_date + 1
 up_to_day <- as.character(Sys.Date())
 api_key <- Sys.getenv("api_key")
-
 
 # the AirNow API uses UTC time: UTC 5 am = CDT 12 am
 make_query_url <- function(last_day, today, key){
@@ -100,3 +95,41 @@ aqi_combo <- aqi_wide %>%
 
 write.csv(aqi_combo, file = paste0(path_to_data, "aqi.csv"), 
           row.names = F)
+
+# aggregate to weekly data
+
+aggregate_weekly <- function(df, var){
+  # this function aggregates data to weekly value
+  var_weekly_means <- df %>% 
+    select(everything(), 
+           -c("COUNTY", "latitude", "longitude", "name")) %>%
+    pivot_longer(col = -Site.ID, names_to = 'date', 
+                 values_to = "value") %>%
+    mutate(date = str_extract(date, "[0-9]{3,}"),
+           date = ymd(date),
+           week = week(date),
+           year = year(date),
+           value = as.numeric(value)) %>% 
+    group_by(year, week) %>% 
+    summarize(var = mean(value, na.rm = T)) %>% 
+    arrange(desc(year), desc(week)) %>% 
+    ungroup() %>% 
+    select(var) 
+  
+  return(var_weekly_means)
+}
+
+# output weekly data
+aqi_weekly <- aggregate_weekly(aqi_combo, AQI) %>% 
+  rename(AQI = var)
+
+pm_weekly <- aggregate_weekly(pm_combo, PM25) %>% 
+  rename(PM25 = var)
+
+write.csv(aqi_weekly, file = paste0(path_to_data, "aqi_means.csv"), 
+          row.names = F)
+
+write.csv(pm_weekly, file = paste0(path_to_data, "pm25_means.csv"), 
+          row.names = F)
+
+
