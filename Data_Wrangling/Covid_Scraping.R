@@ -2,7 +2,6 @@ library(tidyr)
 library(dplyr)
 library(RSocrata)
 library(geojsonio)
-library(bigrquery)
 
 # This scripts scrape up-to-date Covid Data
 
