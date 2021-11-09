@@ -89,6 +89,7 @@ start_date<- strptime(names(covid)[ncol(covid) - 1], "COVID_Week_%Y%m%d")
 end_date<- min(
   strptime(names(covid)[6], "COVID_Week_%Y%m%d") + weeks(1),
   today() - days(2)) # in case data update timing changes, prevents crashing
+start_date<- end_date - weeks(12)
 covid_na<- format(end_date, "COVID_Week_%Y%m%d")
 covid[covid_na]<- NA
 daterange<- paste("From", end_date - days(6), "to", end_date, sep = " ")
