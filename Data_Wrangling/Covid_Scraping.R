@@ -2,6 +2,7 @@ library(tidyr)
 library(dplyr)
 library(RSocrata)
 library(geojsonio)
+library(bigrquery)
 
 # This scripts scrape up-to-date Covid Data
 
@@ -14,8 +15,9 @@ covid_raw <- covid_chicago %>%
   rename(Date = week_start) %>%
   filter(Date >= '2020-12-01') %>%
   arrange(desc(Date)) %>%
-  dplyr::select(zip_code, Date, case_rate_weekly) %>% 
+  dplyr::select(zip_code, week_end, case_rate_weekly) %>% 
   mutate(case_rate_weekly = as.numeric(case_rate_weekly)) %>% 
+  rename(Date = week_end) %>% 
   pivot_wider(names_from = 'Date', values_from = 'case_rate_weekly') %>%
   rename(zip = zip_code) %>% 
   filter(zip != "Unknown")
@@ -27,7 +29,8 @@ colnames(covid) <- gsub("-", "", colnames(covid))
 colnames(covid) <- paste0('COVID_Week_', colnames(covid))
 covid <- cbind(zipcode, covid)
 
-write.csv(covid, file = "Data/COVID/CovidWeekly.csv")
+write.csv(covid, file = "Data/COVID/CovidWeekly.csv",
+          row.names = F)
 
 # calculate mean covid cases across all localities
 covid_means <- covid %>% 
@@ -38,7 +41,10 @@ covid_means <- covid %>%
   summarize(mean_covid = mean(count, na.rm = T)) %>% 
   arrange(desc(time))
 
-write.csv(covid_means, file = "Data/COVID/covid_means.csv")
+write.csv(covid_means, file = "Data/COVID/covid_means.csv",
+          row.names = F)
+
+# update the data tables stored in Google Cloud
 
 # update the geojson file
 

@@ -10,8 +10,8 @@ name: Automatic Covid Data Scraping
 
 on:
   schedule:
-  # Runs on UCT time 12:00 pm = Central Time 7:00 am every Monday
-    - cron: '0 12 * * 1'
+  # Runs on UCT time 13:00 pm = Central Time 7:00 am every Monday
+    - cron: '45 15 * * 1'
 
 jobs:
   build:
