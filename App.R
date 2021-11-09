@@ -86,8 +86,12 @@ names(nn.raster) <- nn.names$nn_names
 mapheight = "60vh"
 
 start_date<- strptime(names(covid)[ncol(covid) - 1], "COVID_Week_%Y%m%d")
-end_date<- strptime(names(covid)[6], "COVID_Week_%Y%m%d")
-daterange<- paste("From", end_date, "to", end_date + days(6), sep = " ")
+end_date<- min(
+  strptime(names(covid)[6], "COVID_Week_%Y%m%d") + weeks(1),
+  today() - days(2)) # in case data update timing changes, prevents crashing
+covid_na<- format(end_date, "COVID_Week_%Y%m%d")
+covid[covid_na]<- NA
+daterange<- paste("From", end_date - days(6), "to", end_date, sep = " ")
 
 ##### COLOR BREAKS #####
 
@@ -102,7 +106,7 @@ aqi.legend.labels<- c("Good", "Moderate", "USG",
 aqipalette <- colorBin(palette= aqi.palette, bins = aqi.bins, na.color="dimgrey")
 
 covid.bins <- classIntervals(na.omit(c(sapply(6:15, function(z) covid[,z][[1]]))), 5, style="fisher")$brks # 5 natural bins
-covidpalette <- colorBin(palette="YlOrRd" , bins=covid.bins, na.color="transparent") # discrete
+covidpalette <- colorBin(palette="YlOrRd" , bins=covid.bins, na.color="dimgrey") # discrete
 
 asthma.bins <- classIntervals(na.omit(c(sapply(6:7, function(z) asthma[,z][[1]]))), 5, style="fisher")$brks # 5 natural bins
 asthmapalette <- colorBin(palette="YlOrRd" , bins=asthma.bins, na.color="transparent") # discrete
@@ -1178,7 +1182,7 @@ server <- function(input, output) {
   
   ##### REACTIVE FUNCTIONS START #####
   left.sensor <- function(map) {
-    in.date <- input$covid_dt + days(6) # week shifts forward for sensor data
+    in.date <- input$covid_dt # week shifts forward for sensor data
     if (input$covid_map_left_sensor == "pm25") {
       col <- pm25[, which(colnames(pm25) == format(in.date, "PM25_%Y%m%d"))]
       addCircles(map,
@@ -1333,7 +1337,7 @@ server <- function(input, output) {
   }
   left.controls <- function(map) {
     map <- addControl(map,
-                      paste0("From ", format(input$covid_dt, "%Y-%m-%d"), " to ", format(input$covid_dt + days(6), "%Y-%m-%d")),
+                      paste0("From ", format(input$covid_dt - days(6), "%Y-%m-%d"), " to ", format(input$covid_dt, "%Y-%m-%d")),
                       position = "bottomright")
     # add choropleth legend
     if (input$covid_map_left_choropleth == "asthma018") {
@@ -1364,13 +1368,13 @@ server <- function(input, output) {
         input$covid_map_left_choropleth != "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette, 
                        className = "info legend legend-circles",
-                       values = pm25[, which(colnames(pm25) == format(input$covid_dt + days(6), "PM25_%Y%m%d"))],
+                       values = pm25[, which(colnames(pm25) == format(input$covid_dt, "PM25_%Y%m%d"))],
                        title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_left_sensor == "aqi") {
       map <- addLegend(map, "bottomleft", pal = aqipalette,
                        className = "info legend legend-circles",
-                       values = aqi[, which(colnames(aqi) == format(input$covid_dt + days(6), "AQI_%Y%m%d"))],
+                       values = aqi[, which(colnames(aqi) == format(input$covid_dt, "AQI_%Y%m%d"))],
                        labFormat = function(type, cuts, p) {
                          paste0(aqi.legend.labels)
                        },
@@ -1380,7 +1384,7 @@ server <- function(input, output) {
     map
   }
   right.sensor <- function(map) {
-    in.date <- input$covid_dt + days(6) # week shifts forward for sensor data
+    in.date <- input$covid_dt # week shifts forward for sensor data
     if (input$covid_map_right_sensor == "pm25") {
       col <- pm25[, which(colnames(pm25) == format(in.date, "PM25_%Y%m%d"))]
       addCircles(map,
@@ -1537,7 +1541,7 @@ server <- function(input, output) {
   }
   right.controls <- function(map) {
     map <- addControl(map,
-                      paste0("From ", format(input$covid_dt, "%Y-%m-%d"), " to ", format(input$covid_dt + days(6), "%Y-%m-%d")),
+                      paste0("From ", format(input$covid_dt - days(6), "%Y-%m-%d"), " to ", format(input$covid_dt, "%Y-%m-%d")),
                       position = "bottomright")
     # add choropleth legend
     if (input$covid_map_right_choropleth == "asthma018") {
@@ -1568,13 +1572,13 @@ server <- function(input, output) {
         input$covid_map_right_choropleth != "pm25") {
       map <- addLegend(map, "bottomleft", pal = pm25palette,
                        className = "info legend legend-circles",
-                       values = pm25[, which(colnames(pm25) == format(input$covid_dt + days(6), "PM25_%Y%m%d"))],
+                       values = pm25[, which(colnames(pm25) == format(input$covid_dt, "PM25_%Y%m%d"))],
                        title = "PM2.5 (ug/m3)", opacity = 1)
     }
     else if (input$covid_map_right_sensor == "aqi") {
       map <- addLegend(map, "bottomleft", pal = aqipalette, 
                        className = "info legend legend-circles",
-                       values = aqi[, which(colnames(aqi) == format(input$covid_dt + days(6), "AQI_%Y%m%d"))],
+                       values = aqi[, which(colnames(aqi) == format(input$covid_dt, "AQI_%Y%m%d"))],
                        labFormat = function(type, cuts, p) {
                          paste0(aqi.legend.labels)
                        },
