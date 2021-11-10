@@ -76,8 +76,12 @@ cdph.permits <- st_read("Data/CDPH_Permits")
 
 #NN Data Loading
 nn.raster <- stack("Data/NN/nn_21_base.grd")
+nn.spatial <- stack("Data/NN/nn_21_spatialcv.grd")
+nn.out <- stack("Data/NN/nn_21_outlier.grd")
 nn.names <- read.csv("Data/NN_Raster_Names_New.csv")
 names(nn.raster) <- nn.names$nn_names
+names(nn.spatial) <- nn.names$nn_names
+names(nn.out) <- nn.names$nn_names
 
 ##### DATA LOADING END #####
 
@@ -715,6 +719,10 @@ ui <- dashboardPage(
                        radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette", 
                                          c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
                                          selected = "ovr")),
+                column(width = 7,
+                       radioGroupButtons(paste("nn", "mod", sep = "_"), "Select Model", 
+                                         c("Base" = "base", "Spatial" = "spat", "Outliers" = "out"), 
+                                         selected = "base")),
                 column(width = 12,
                        sliderTextInput("nn_dt", "Select Month:",
                                 choices = format(seq.Date(as.Date("2014/01/01"), as.Date("2018/12/01"), by="month"),
@@ -1798,10 +1806,15 @@ server <- function(input, output) {
       }
       
       in.pal <- input$nn_rad
+      
+      in.raster <- switch(input$nn_mod, 
+                          "base" = nn.raster, 
+                          "spat" = nn.spatial,
+                          "out" = nn.out)
        
-      nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = nn.raster)
+      nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = in.raster) # TODO: should this switch with chosen raster?
        
-      sliderProxy("nn_map", this.nn.name, nn.pal, raster = nn.raster, units = "Predicted PM2.5 (ug/m3)")
+      sliderProxy("nn_map", this.nn.name, nn.pal, raster = in.raster, units = "Predicted PM2.5 (ug/m3)")
     }
   })
   
