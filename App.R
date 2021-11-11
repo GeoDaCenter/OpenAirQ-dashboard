@@ -770,7 +770,7 @@ ui <- dashboardPage(
 
     generateOneTimeTab(elevation.tabname, elevation.name, elevation.description, elevation.source),
 
-    generateDynaTab(pm25.tabname, pm25.name, pm25.description, pm25.source, radselect = "mon"),
+    generateDynaTab(pm25.tabname, pm25.name, pm25.description, pm25.source),
 
     generateDynaTab(pm10.tabname, pm10.name, pm10.description, pm10.source),
 
@@ -1861,7 +1861,7 @@ server <- function(input, output) {
 
       this.aod.name <- "AOD_3_16"
 
-      in.pal <- "ovr"
+      in.pal <- "mon"
 
       aod.pal <- palFromLayer(this.aod.name, style = in.pal, raster = master.raster)
 
@@ -1912,7 +1912,7 @@ server <- function(input, output) {
 
   output$ndvi_map <- renderLeaflet({
     this.ndvi.name <- "NDVI_3_16"
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     ndvi.pal <- palFromLayer(this.ndvi.name, style = in.pal, colors = c("lightblue", "yellow", "lightgreen", "green", "darkgreen"),
                              raster = master.raster)
@@ -1967,7 +1967,7 @@ server <- function(input, output) {
 
     this.brf.name <- "BRDF_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     brf.pal <- palFromLayer(this.brf.name, style = in.pal, colors = c("black", "white"), raster = master.raster)
 
@@ -2215,7 +2215,8 @@ server <- function(input, output) {
                         choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "pm25_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -2277,7 +2278,7 @@ server <- function(input, output) {
 
     this.pm10.name <- "PM10_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = monthly.raster)
 
@@ -2321,7 +2322,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "pm10_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -2383,7 +2385,7 @@ server <- function(input, output) {
 
     this.co.name <- "CO_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     co.pal <- palFromLayer(this.co.name, style = in.pal, raster = monthly.raster)
 
@@ -2427,7 +2429,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "co_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -2489,7 +2492,7 @@ server <- function(input, output) {
 
     this.no2.name <- "NO2_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     no2.pal <- palFromLayer(this.no2.name, style = in.pal, raster = master.raster)
 
@@ -2533,7 +2536,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "no2_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -2594,7 +2598,7 @@ server <- function(input, output) {
   output$o3_map <- renderLeaflet({
 
     this.o3.name <- "Ozone_3_16"
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     o3.pal <- palFromLayer(this.o3.name, style = in.pal, raster = master.raster)
 
@@ -2638,7 +2642,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "o3_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -2699,7 +2704,7 @@ server <- function(input, output) {
 
     this.so2.name <- "SO2_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     so2.pal <- palFromLayer(this.so2.name, style = in.pal, raster = master.raster)
 
@@ -2744,7 +2749,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "so2_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
 
@@ -2806,7 +2812,7 @@ server <- function(input, output) {
 
     this.pb.name <- "Lead_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     pb.pal <- palFromLayer(this.pb.name, style = in.pal, raster = master.raster)
 
@@ -2852,7 +2858,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "pb_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -3084,7 +3091,7 @@ server <- function(input, output) {
   output$temp_map <- renderLeaflet({
     this.temp.name <- "Temp_3_16"
 
-    in.pal <- "ovr"
+    in.pal <- "mon"
 
     temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = master.raster)
 
@@ -3129,7 +3136,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "temp_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -3185,7 +3193,7 @@ server <- function(input, output) {
   output$pressure_map <- renderLeaflet({
     this.pressure.name <- "Pressure_3_16"
     
-    in.pal <- "ovr"
+    in.pal <- "mon"
     
     pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = master.raster)
     
@@ -3228,7 +3236,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "pressure_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   
@@ -3286,7 +3295,7 @@ server <- function(input, output) {
   output$precip_map <- renderLeaflet({
   
     this.precip.name <- "Precip_3_16"
-    in.pal <- "ovr"
+    in.pal <- "mon"
   
     precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = master.raster)
   
@@ -3328,7 +3337,8 @@ server <- function(input, output) {
                             choices = slider_vals[[2]])
       updateRadioGroupButtons(session = getDefaultReactiveDomain(),
                               inputId = "precip_rad",
-                              choices = slider_vals[[3]])
+                              choices = slider_vals[[3]],
+                              selected = slider_vals[[3]][3])
     }
   })
   

@@ -7,8 +7,7 @@
 #' @param radselect a string designating the palette scope
 #' @param mapheight a string for map size
 #' 
-generateDynaTab <- function(tabname, variablename, variabledescription, sourcedescription,
-                                 radselect = "ovr", mapheight = "90vh") 
+generateDynaTab <- function(tabname, variablename, variabledescription, sourcedescription, mapheight = "90vh") 
 {
   tabItem(tabName = tabname,
           fluidRow(
@@ -29,7 +28,7 @@ generateDynaTab <- function(tabname, variablename, variabledescription, sourcede
                   column(width = 7,
                          radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
                                            c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                           selected = radselect)),
+                                           selected = "mon")),
                   column(width = 2,
                          radioButtons(paste(tabname, "res", sep = "_"), "Timestep:",
                                       choices = c("Monthly" = "mon",
