@@ -719,9 +719,13 @@ ui <- dashboardPage(
                 column(width = 7,
                        radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette", 
                                          c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                         selected = "ovr")),
+                                         selected = "mon")),
                 column(width = 7,
                        radioGroupButtons(paste("nn", "mod", sep = "_"), "Select Model", 
+                                         c("Base" = "base", "Spatial" = "spat", "Outliers" = "out"), 
+                                         selected = "base")),
+                column(width = 7,
+                       radioGroupButtons(paste("nn", "mod", "c", sep = "_"), "Select Color Palette (Model)", 
                                          c("Base" = "base", "Spatial" = "spat", "Outliers" = "out"), 
                                          selected = "base")),
                 column(width = 12,
@@ -1786,7 +1790,7 @@ server <- function(input, output) {
   output$nn_map <- renderLeaflet({
     this.nn.name <- "NN_7_16"
     
-    in.pal <- "ovr"
+    in.pal <- "mon"
     
     nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = nn.raster)
     
@@ -1817,8 +1821,13 @@ server <- function(input, output) {
                           "base" = nn.raster, 
                           "spat" = nn.spatial,
                           "out" = nn.out)
+      
+      pal.raster <- switch(input$nn_mod_c, 
+                           "base" = nn.raster, 
+                           "spat" = nn.spatial,
+                           "out" = nn.out)
        
-      nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = in.raster) # TODO: should this switch with chosen raster?
+      nn.pal <- palFromLayer(this.nn.name, style = in.pal, raster = pal.raster) # TODO: should this switch with chosen raster?
        
       sliderProxy("nn_map", this.nn.name, nn.pal, raster = in.raster, units = "Predicted PM2.5 (ug/m3)")
     }

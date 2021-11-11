@@ -3,6 +3,8 @@ The Chicago Open Air Quality Dashboard is an app for examining current and histo
 
 The web host for this app is available at https://herop.shinyapps.io/airq/
 
+There are also readme files available in the `Data` and `Data_Wrangling` folders, which explain more about the data, and the automated data collection process, respectively.
+
 ### Home
 The home tab includes 2 explorer pages. 
 
@@ -28,7 +30,9 @@ The remote-sensed data tab includes a combination of satellite and surveyed data
 Data can be selected by quarter. The surfaces provided here are not interpolations.
 
 ### PM<sub>2.5</sub> Model
-The PM<sub>2.5</sub> model tab gives the results of the lab's neural net PM<sub>2.5</sub> interpolation model.
+The PM<sub>2.5</sub> model tab gives the results of the lab's neural net PM<sub>2.5</sub> interpolation model. The map can be switched between the 3 models the lab has produced.
+
+In addition to the option to switch the color palette to one corresponding to a given period, this tab also provides the option to switch the color palette to one corresponding to each model, to allow easier comparison between models.
 
 Results are provided monthly, and present a better picture of the local trends in PM<sub>2.5</sub> than the corresponding IDW interpolation.
 
