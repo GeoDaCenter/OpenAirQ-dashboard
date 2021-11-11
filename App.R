@@ -40,6 +40,7 @@ large.area <- st_read("Data/LargeAreaCounties")
 large.area$COUNTYNAME <- as.character(large.area$COUNTYNAME)
 county.avgs <- read.csv("Data/county_averages_monthly.csv")
 county.avgs$Name <- as.character(county.avgs$Name)
+county.avgs$Name[16] = "Lake, WI"
 var.avgs <- colMeans(county.avgs[,4:ncol(county.avgs)], na.rm = T)
 
 #### MAP DATA
@@ -1066,7 +1067,7 @@ server <- function(input, output) {
           }
         }}
     }
-    p
+    p %>% layout(legend = 1)
   })
   
   output$distplot <- renderPlotly({
@@ -1123,7 +1124,7 @@ server <- function(input, output) {
     home.checkbox <- ("mean" %in% input$homecheck)
     
     if (length(vars) ==1){
-      p <- plot_ly(alpha = 0.6, type = "violin") %>% config(displayModeBar = F) %>%
+      p <- plot_ly(alpha = 0.6, type = "violin", hoverinfo="y", hoveron = "violins+points") %>% config(displayModeBar = F) %>%
         layout(legend = list(x = .5, y = 100, orientation = "h"))
       
       if(home.checkbox == T) { # Add overall variable mean line
@@ -1137,33 +1138,31 @@ server <- function(input, output) {
           if("rescale" %in% input$homecheck) {
             p <- add_trace(p,
                            y = rescale(as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[i]])])),
-                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
-                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
           } else {
             p <- add_trace(p,
                            y = as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[i]])]),
-                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
-                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
           }
         }}
-      p %>% layout(showlegend = FALSE)
+      p %>% layout(showlegend = FALSE, title = paste0("Distribution of ", vars))
     }
     
     else if (length(vars) >= 2){
       p <- plot_ly(alpha = 0.6, type = "scatter") %>% config(displayModeBar = F) %>%
         layout(legend = list(x = .5, y = 100, orientation = "h"))
-      if(home.checkbox == T) { # Add overall variable mean line
+      if(home.checkbox == T) { # Add overall variable mean markers
         p <- add_trace(p,
                        x = these.vars.avgs[[1]],
                        y = these.vars.avgs[[2]],
                        type = "scatter",
                        mode = "markers",
                        opacity = 1,
-                       marker = list(color = colors[1,i]),
+                       marker = list(color = colors[1,i], symbol = "x"),
                        name = "Average",
                        text= "Average")
       }
-      if(length(selected.fips) != 0) { # Add county variable mean line
+      if(length(selected.fips) != 0) { # Add county variable mean markers
         for(j in 1:length(selected.fips)) {
           if("rescale" %in% input$homecheck) {
             p <- add_trace(p,
@@ -1173,8 +1172,7 @@ server <- function(input, output) {
                            mode = "markers",
                            opacity = .5,
                            marker = list(color = colors[j+1,1]),
-                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
-                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
           } else {
             p <- add_trace(p,
                            x = as.numeric(county.avgs[selected.fips[j],names(these.vars.avgs[[1]])]),
@@ -1183,11 +1181,10 @@ server <- function(input, output) {
                            mode = "markers",
                            opacity = .5,
                            marker = list(color = colors[j+1, 1]),
-                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "),
-                           text= paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
+                           name = paste(county.avgs$Name[selected.fips[j]], "County", vars[i], sep = " "))
           }
         }}
-      p %>% layout(xaxis = list(title = vars[[1]]), yaxis = list(title = vars[[2]]))
+      p %>% layout(xaxis = list(title = vars[[1]]), yaxis = list(title = vars[[2]]), title = paste0("Interaction of ", vars[[1]], " and ", vars[[2]]), legend = 1)
     }
   })
 
