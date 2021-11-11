@@ -3,7 +3,7 @@ The Chicago Open Air Quality Dashboard is an app for examining current and histo
 
 The web host for this app is available at https://herop.shinyapps.io/airq/
 
-There are also readme files available in the `Data` and `Data_Wrangling` folders, which explain more about the data, and the automated data collection process, respectively.
+There are also readme files available in the [Data](Data) and [Data_Wrangling](Data_Wrangling) folders, which explain more about the data, and the automated data collection process, respectively.
 
 ### Home
 The home tab includes 2 explorer pages. 

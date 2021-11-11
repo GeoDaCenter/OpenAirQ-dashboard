@@ -717,7 +717,7 @@ ui <- dashboardPage(
                                          c("21 Counties" = "lac", 
                                            "Chicago" = "chi"))),
                 column(width = 7,
-                       radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette", 
+                       radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette (Time)", 
                                          c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
                                          selected = "mon")),
                 column(width = 7,
