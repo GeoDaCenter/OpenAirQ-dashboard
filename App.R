@@ -2920,7 +2920,7 @@ server <- function(input, output) {
 
   output$pe_map <- renderLeaflet({
 
-    pe.pal <- palFromLayer("PECount",  raster = master.raster)
+    pe.pal <- palFromLayer("PECount",  raster = master.raster, colors = get_colors("pe"))
     
     pe.map <- leaflet("PECount") %>%
       setView(lng = -87.660456,
@@ -2936,13 +2936,13 @@ server <- function(input, output) {
                   layerId = chi.map$area_numbe,
                   weight = 1,
                   fillOpacity = 0.01) %>%
-      addRasterImage(master.raster[["PECount"]], opacity = 0.95, colors = pe.pal) %>%
+      addRasterImage(master.raster[["PECount"]], opacity = 0.8, colors = pe.pal) %>%
       addLegendDecreasing(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources", decreasing = TRUE) %>%
       addCircleMarkers(data = cdph.permits,
                        color = "black",
                        radius = 1.5,
                        stroke = T,
-                       opacity = .8,
+                       opacity = .6,
                        weight = 1,
                        label = cdph.permits$APPLICAT_1,
                        popup = paste(paste("Applicant:", cdph.permits$APPLICAT_1, sep = " "),
@@ -2992,17 +2992,17 @@ server <- function(input, output) {
         addPolygons(data = chi.map,
                     color = "darkslategray",
                     stroke = T,
-                    opacity = 1,
+                    opacity = 0.8,
                     layerId = chi.map$area_numbe,
                     weight = 1,
                     fillOpacity = 0.01) %>%
-        addRasterImage(master.raster[["PECount"]], opacity = 0.95, colors = pe.pal) %>%
+        addRasterImage(master.raster[["PECount"]], opacity = 0.6, colors = pe.pal) %>%
         addLegendDecreasing(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "Point Emission Sources", decreasing = TRUE) %>%
         addCircleMarkers(data = cdph.permits,
                          color = "black",
                          radius = 1.5,
                          stroke = T,
-                         opacity = 1,
+                         opacity = 0.6,
                          weight = 1,
                          label = cdph.permits$APPLICAT_1,
                          popup = paste(paste("Applicant:", cdph.permits$APPLICAT_1, sep = " "),
@@ -3025,7 +3025,7 @@ server <- function(input, output) {
         
         pe.proxy %>%
           flyTo(lat = "41.97736", lng = "-87.62255", zoom = 7) %>% 
-          addRasterImage(master.raster[["PECount"]], opacity = .95, colors = pe.pal) %>%
+          addRasterImage(master.raster[["PECount"]], opacity = 0.8, colors = pe.pal) %>%
           addLegendDecreasing(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources", decreasing = TRUE) %>%
           addPolygons(data = large.area, 
                       color = "darkslategray",

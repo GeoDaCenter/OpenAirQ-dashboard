@@ -793,7 +793,7 @@ get_colors <- function(varName){
     return(cividis(100, alpha = 0.8, begin = 0.5, direction = -1))
   }
   else if(varName =="pe"){
-    return(rocket(100, alpha = 1, begin = 0, end = 0.5, direction = -1))
+    return(inferno(100, alpha = 1, begin = 0.5, end = 1, direction = -1))
   }
   else if(varName == "temp"){
     return(turbo(100, alpha = 0.8))
