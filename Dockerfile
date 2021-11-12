@@ -27,7 +27,9 @@ RUN install2.r --error \
     dplyr \ 
     tidyr \ 
     stringr \
-    purrr
+    purrr \
+    viridis \
+    prompter
     
 WORKDIR /home/shinyusr
 COPY ./ .

@@ -1,3 +1,112 @@
+# Legend Reversing function
+# Taken from https://github.com/rstudio/leaflet/issues/256#issuecomment-440290201
+# Addresses Leaflet issue of presenting legend in unintuitive direction
+addLegendDecreasing <- function (map, position = c("topright", "bottomright", "bottomleft","topleft"),
+                                  pal, values, na.label = "NA", bins = 7, colors, 
+                                  opacity = 0.5, labels = NULL, labFormat = labelFormat(), 
+                                  title = NULL, className = "info legend", layerId = NULL, 
+                                  group = NULL, data = getMapData(map), decreasing = FALSE) {
+  
+  position <- match.arg(position)
+  type <- "unknown"
+  na.color <- NULL
+  extra <- NULL
+  if (!missing(pal)) {
+    if (!missing(colors)) 
+      stop("You must provide either 'pal' or 'colors' (not both)")
+    if (missing(title) && inherits(values, "formula")) 
+      title <- deparse(values[[2]])
+    values <- evalFormula(values, data)
+    type <- attr(pal, "colorType", exact = TRUE)
+    args <- attr(pal, "colorArgs", exact = TRUE)
+    na.color <- args$na.color
+    if (!is.null(na.color) && col2rgb(na.color, alpha = TRUE)[[4]] == 
+        0) {
+      na.color <- NULL
+    }
+    if (type != "numeric" && !missing(bins)) 
+      warning("'bins' is ignored because the palette type is not numeric")
+    if (type == "numeric") {
+      cuts <- if (length(bins) == 1) 
+        pretty(values, bins)
+      else bins   
+      if (length(bins) > 2) 
+        if (!all(abs(diff(bins, differences = 2)) <= 
+                 sqrt(.Machine$double.eps))) 
+          stop("The vector of breaks 'bins' must be equally spaced")
+      n <- length(cuts)
+      r <- range(values, na.rm = TRUE)
+      cuts <- cuts[cuts >= r[1] & cuts <= r[2]]
+      n <- length(cuts)
+      p <- (cuts - r[1])/(r[2] - r[1])
+      extra <- list(p_1 = p[1], p_n = p[n])
+      p <- c("", paste0(100 * p, "%"), "")
+      if (decreasing == TRUE){
+        colors <- pal(rev(c(r[1], cuts, r[2])))
+        labels <- rev(labFormat(type = "numeric", cuts))
+      }else{
+        colors <- pal(c(r[1], cuts, r[2]))
+        labels <- rev(labFormat(type = "numeric", cuts))
+      }
+      colors <- paste(colors, p, sep = " ", collapse = ", ")
+    }
+    else if (type == "bin") {
+      cuts <- args$bins
+      n <- length(cuts)
+      mids <- (cuts[-1] + cuts[-n])/2
+      if (decreasing == TRUE){
+        colors <- pal(rev(mids))
+        labels <- rev(labFormat(type = "bin", cuts))
+      }else{
+        colors <- pal(mids)
+        labels <- labFormat(type = "bin", cuts)
+      }
+    }
+    else if (type == "quantile") {
+      p <- args$probs
+      n <- length(p)
+      cuts <- quantile(values, probs = p, na.rm = TRUE)
+      mids <- quantile(values, probs = (p[-1] + p[-n])/2, na.rm = TRUE)
+      if (decreasing == TRUE){
+        colors <- pal(rev(mids))
+        labels <- rev(labFormat(type = "quantile", cuts, p))
+      }else{
+        colors <- pal(mids)
+        labels <- labFormat(type = "quantile", cuts, p)
+      }
+    }
+    else if (type == "factor") {
+      v <- sort(unique(na.omit(values)))
+      colors <- pal(v)
+      labels <- labFormat(type = "factor", v)
+      if (decreasing == TRUE){
+        colors <- pal(rev(v))
+        labels <- rev(labFormat(type = "factor", v))
+      }else{
+        colors <- pal(v)
+        labels <- labFormat(type = "factor", v)
+      }
+    }
+    else stop("Palette function not supported")
+    if (!any(is.na(values))) 
+      na.color <- NULL
+  }
+  else {
+    if (length(colors) != length(labels)) 
+      stop("'colors' and 'labels' must be of the same length")
+  }
+  legend <- list(colors = I(unname(colors)), labels = I(unname(labels)), 
+                 na_color = na.color, na_label = na.label, opacity = opacity, 
+                 position = position, type = type, title = title, extra = extra, 
+                 layerId = layerId, className = className, group = group)
+  invokeMethod(map, data, "addLegend", legend)
+}
+
+
+
+
+
+
 #' Generate tab for historical data with quarterly and monthly aggregations
 #' 
 #' @param tabname a string for output
@@ -10,6 +119,7 @@
 generateDynaTab <- function(tabname, variablename, variabledescription, sourcedescription, mapheight = "90vh") 
 {
   tabItem(tabName = tabname,
+          use_prompt(),
           fluidRow(
             box(width = 4,
                 tabsetPanel(
@@ -21,14 +131,22 @@ generateDynaTab <- function(tabname, variablename, variabledescription, sourcede
                            p(sourcedescription))),
                 fluidRow(
                   column(width = 5,
-                         radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
-                                           "Set View", 
-                                           c("21 Counties" = "lac", 
-                                             "Chicago" = "chi"))),
+                         add_prompt(
+                           radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
+                                             "Set View", 
+                                             c("21 Counties" = "lac", 
+                                               "Chicago" = "chi")), 
+                           position = "bottom", message = "Zoom in or out of map",
+                           type = "info", animate = TRUE
+                         )),
                   column(width = 7,
-                         radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
-                                           c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                           selected = "mon")),
+                         add_prompt(
+                           radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Scale", 
+                                             c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
+                                             selected = "mon"),
+                         position = "bottom", message = "Select if map color should be \n relative to all, year's, or selected readings",
+                         type = "info", animate = TRUE
+                         )),
                   column(width = 2,
                          radioButtons(paste(tabname, "res", sep = "_"), "Timestep:",
                                       choices = c("Monthly" = "mon",
@@ -59,6 +177,7 @@ generateQuarterlyTab <- function(tabname, variablename, variabledescription, sou
                                   mapheight = "90vh") 
   {
   tabItem(tabName = tabname,
+          use_prompt(),
           fluidRow(
             box(width = 4,
               tabsetPanel(
@@ -69,14 +188,23 @@ generateQuarterlyTab <- function(tabname, variablename, variabledescription, sou
                   h4("Data Source"),
                   p(sourcedescription))),
               column(width = 5,
-                radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
-                                              "Set View", 
-                                              c("21 Counties" = "lac", 
-                                                "Chicago" = "chi"))),
+                     add_prompt(
+                       radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
+                                         "Set View", 
+                                         c("21 Counties" = "lac", 
+                                           "Chicago" = "chi")), 
+                       position = "bottom", message = "Zoom in or out of map",
+                       type = "info", animate = TRUE
+                     )),
               column(width = 7,
-                radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
-                                c("Overall" = "ovr", "Yearly" = "yr", "Quarterly" = "qtr"), 
-                                selected = "ovr")),
+                     add_prompt(
+                       radioGroupButtons(paste(tabname, "rad", sep = "_"), "Select Color Palette", 
+                                         c("Overall" = "ovr", "Yearly" = "yr", "Quarterly" = "qtr"), 
+                                         selected = "ovr"),
+                       position = "bottom", message = "Select if map color should be \n relative to all, year's, or selected readings",
+                       type = "info", animate = TRUE
+                     )
+                ),
               sliderInput(paste(tabname, "dt", sep = "_"), "Select quarter:",
                           min = strptime("2014/01/01","%Y/%m/%d"), 
                           max = strptime("2018/12/31","%Y/%m/%d"),
@@ -104,6 +232,7 @@ generateQuarterlyTab <- function(tabname, variablename, variabledescription, sou
 generateOneTimeTab <- function(tabname, variablename, variabledescription, sourcedescription,
                                mapviewselected = "lac", mapheight = "90vh") {
   tabItem(tabName = tabname,
+          use_prompt(),
           fluidRow(
             box(width = 4,
               tabsetPanel(
@@ -114,12 +243,14 @@ generateOneTimeTab <- function(tabname, variablename, variabledescription, sourc
                          h4("Data Source"),
                          p(sourcedescription))
                 ),
-              radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
-                                "Set View", 
-                                c("21 Counties" = "lac", 
-                                  "Chicago" = "chi"),
-                                selected = mapviewselected)
-              ),
+              add_prompt(
+                radioGroupButtons(inputId = paste(tabname, "chi_zoom", sep = "_"),
+                                  "Set View", 
+                                  c("21 Counties" = "lac", 
+                                    "Chicago" = "chi")), 
+                position = "bottom", message = "Zoom in or out of map",
+                type = "info", animate = TRUE
+              )),
             box(width = 8,
                 leafletOutput(paste(tabname, "map", sep = "_"), height = mapheight)
             )
@@ -233,7 +364,7 @@ sliderProxy <- function(mapname, layername, layerpal, raster, rasterOpacity = 0.
     clearImages() %>%
     clearMarkers() %>%
     addRasterImage(raster[[layername]], opacity = rasterOpacity, colors = layerpal) %>%
-    leaflet::addLegend(pal = layerpal, values = values(raster[[layername]]), title = paste(gsub("_.*","",layername), units))
+    addLegendDecreasing(pal = layerpal, values = values(raster[[layername]]), title = paste(gsub("_.*","",layername), units), decreasing = TRUE)
   
   if (!is.null(EPApoints)) {
     points <- na.omit(EPApoints[layername])
@@ -632,4 +763,49 @@ time_plot <- function(in.date, varname, res, points, ylab){
     geom_vline(xintercept = in.date, color = "red")
   
   return(tplot)
+}
+
+#' Stores selected palettes for all leaflet maps
+#' 
+#' @param varName the variable to pull a palette for
+#' 
+#' @returns a color scheme
+get_colors <- function(varName){
+  if (varName == "pm25"){
+    return(rocket(100, alpha = 0.8, direction = -1))
+  }
+  else if(varName =="pm10"){
+    return(inferno(100, alpha = 0.8, direction = -1))
+  }
+  else if(varName =="co"){
+    return(cividis(100, alpha = 0.8, direction = -1))
+  }
+  else if(varName =="no2"){
+    return(mako(100, alpha = 0.8, direction = -1))
+  }
+  else if(varName =="o3"){
+    return(magma(100, alpha = 0.8, direction = -1))
+  }
+  else if(varName =="so2"){
+    return(inferno(100, alpha = 0.8, direction = -1))
+  }
+  else if(varName =="pb"){
+    return(cividis(100, alpha = 0.8, begin = 0.5, direction = -1))
+  }
+  else if(varName =="pe"){
+    return(rocket(100, alpha = 1, begin = 0, end = 0.5, direction = -1))
+  }
+  else if(varName == "temp"){
+    return(turbo(100, alpha = 0.8))
+  }
+  else if(varName == "pressure"){
+    return(cividis(100, begin = 0, end  = 0.5, alpha = 0.8))
+  }
+  else if(varName == "precip"){
+    return(turbo(100, alpha = 0.8))
+  }
+  else if(varName == "elevation"){
+    return(mako(100, alpha = 0.8, end = 0.5))
+  }
+  
 }

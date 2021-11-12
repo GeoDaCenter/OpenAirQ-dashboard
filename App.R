@@ -16,6 +16,8 @@ library(raster)
 library(scales)
 library(zoo)
 library(ggthemes)
+library(viridis)
+library(prompter)
 
 # FUNCTIONS FOR APP USE
 source("DashFunctions.R")
@@ -712,14 +714,22 @@ ui <- dashboardPage(
                              p(nn.source))),
               fluidRow(
                 column(width = 5,
-                       radioGroupButtons(inputId = paste("nn", "chi_zoom", sep = "_"),
-                                         "Set View", 
-                                         c("21 Counties" = "lac", 
-                                           "Chicago" = "chi"))),
+                       add_prompt(
+                         radioGroupButtons(inputId = "lc_chi_zoom",
+                                           "Set View", 
+                                           c("21 Counties" = "lac", 
+                                             "Chicago" = "chi")), 
+                         position = "bottom", message = "Zoom in or out of map",
+                         type = "info", animate = TRUE
+                       )),
                 column(width = 7,
-                       radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Palette (Time)", 
-                                         c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
-                                         selected = "mon")),
+                       add_prompt(
+                         radioGroupButtons(paste("nn", "rad", sep = "_"), "Select Color Scale", 
+                                           c("Overall" = "ovr", "Yearly" = "yr", "Monthly" = "mon"), 
+                                           selected = "mon"),
+                         position = "bottom", message = "Select if map color should be \n relative to all, year's, or selected predictions",
+                         type = "info", animate = TRUE
+                       )),
                 column(width = 7,
                        radioGroupButtons(paste("nn", "mod", sep = "_"), "Select Model", 
                                          c("Base" = "base", "Spatial" = "spat", "Outliers" = "out"), 
@@ -749,6 +759,7 @@ ui <- dashboardPage(
     generateQuarterlyTab(brf.tabname, brf.name, brf.description, brf.source),
 
     tabItem(tabName = "landcover",
+            use_prompt(),
             fluidRow(
               box(width = 4,
                   tabsetPanel(
@@ -758,10 +769,14 @@ ui <- dashboardPage(
                     tabPanel(title = "Source",
                              h4("Data Source"),
                              p(lc.source))),
-                  radioGroupButtons(inputId = "lc_chi_zoom",
-                                    "Set View", 
-                                    c("21 Counties" = "lac", 
-                                      "Chicago" = "chi"))),
+                  add_prompt(
+                    radioGroupButtons(inputId = "lc_chi_zoom",
+                                      "Set View", 
+                                      c("21 Counties" = "lac", 
+                                        "Chicago" = "chi")), 
+                    position = "bottom", message = "Zoom in or out of map",
+                    type = "info", animate = TRUE
+                  )),
               box(width = 8,
                   leafletOutput("lc_map", height = "90vh"),
                   radioGroupButtons(inputId = "lc_choose",
@@ -2043,7 +2058,7 @@ server <- function(input, output) {
       
         lc.proxy <- lc.proxy %>%
           addRasterImage(master.raster[["grn_ndx"]], opacity = 0.4, colors = grn.pal) %>%
-          leaflet::addLegend(pal = grn.pal, values = values(master.raster[["grn_ndx"]]), title = "Green Index")
+          addLegendDecreasing(pal = grn.pal, values = values(master.raster[["grn_ndx"]]), title = "Green Index", decreasing = TRUE)
         
         
     } else if(input$lc_choose == "gry_ndx") {
@@ -2053,7 +2068,7 @@ server <- function(input, output) {
       
       lc.proxy <- lc.proxy %>%
         addRasterImage(master.raster[["gry_ndx"]], opacity = 0.4, colors = gry.pal) %>%
-        leaflet::addLegend(pal = gry.pal, values = values(master.raster[["gry_ndx"]]), title = "Gray Index") 
+        addLegendDecreasing(pal = gry.pal, values = values(master.raster[["gry_ndx"]]), title = "Gray Index",  decreasing = TRUE) 
 
     } else if (input$lc_choose == "blu_ndx") {
       lc.proxy <- lc.proxy %>%
@@ -2062,7 +2077,7 @@ server <- function(input, output) {
       
       lc.proxy <- lc.proxy %>%
         addRasterImage(master.raster[["blu_ndx"]], opacity = 0.4, colors = blu.pal) %>%
-        leaflet::addLegend(pal = blu.pal, values = values(master.raster[["blu_ndx"]]), title = "Blue Index")
+        addLegendDecreasing(pal = blu.pal, values = values(master.raster[["blu_ndx"]]), title = "Blue Index", decreasing = TRUE)
     }
     }
       
@@ -2099,7 +2114,7 @@ server <- function(input, output) {
   
   output$elevation_map <- renderLeaflet({
 
-    elev.pal <- palFromLayer("Elev", raster = master.raster)
+    elev.pal <- palFromLayer("Elev", raster = master.raster, colors = get_colors("elevation"))
 
     elevation.map <- dashMap("Elev", elev.pal, raster = master.raster, area = large.area, layerId = large.area$FIPS, units = "(m)")
 
@@ -2205,7 +2220,8 @@ server <- function(input, output) {
     pm25.pal <- palFromLayer(this.pm25.name, 
                              style = in.pal, 
                              raster = pm25_raster(),
-                             pt.bounds = pt.bounds)
+                             pt.bounds = pt.bounds,
+                             colors = get_colors("pm25"))
     
     sliderProxy("pm25_map", this.pm25.name, pm25.pal, raster = pm25_raster(), units = "(ug/m3)", EPApoints = pm25_points())
     }
@@ -2311,7 +2327,7 @@ server <- function(input, output) {
 
     in.pal <- input$pm10_rad
 
-    pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = pm10_raster())
+    pm10.pal <- palFromLayer(this.pm10.name, style = in.pal, raster = pm10_raster(), colors = get_colors("pm10"))
 
     sliderProxy("pm10_map", this.pm10.name, pm10.pal, raster = pm10_raster(), units = "(ug/m3)", EPApoints = pm10_points())
     }
@@ -2352,10 +2368,10 @@ server <- function(input, output) {
   observeEvent(input$pm10_chi_zoom, {
     if(input$sidebar == "pm10") {
       if(input$pm10_chi_zoom == "chi") {
-        chiView("pm10_map", chi.map, EPApoints = epa.quarterly) 
+        chiView("pm10_map", chi.map) 
       }
       else if (input$pm10_chi_zoom == "lac") {
-        lacView("pm10_map", large.area, EPApoints = epa.quarterly)
+        lacView("pm10_map", large.area)
       }
     }
   })
@@ -2418,7 +2434,7 @@ server <- function(input, output) {
 
       in.pal <- input$co_rad
 
-      co.pal <- palFromLayer(this.co.name, style = in.pal, raster = co_raster())
+      co.pal <- palFromLayer(this.co.name, style = in.pal, raster = co_raster(), colors = get_colors("co"))
 
       sliderProxy("co_map", this.co.name, co.pal, raster = co_raster(), units = "(ppm)", EPApoints = co_points())
     }
@@ -2525,7 +2541,7 @@ server <- function(input, output) {
 
     in.pal <- input$no2_rad
 
-    no2.pal <- palFromLayer(this.no2.name, style = in.pal, raster = no2_raster())
+    no2.pal <- palFromLayer(this.no2.name, style = in.pal, raster = no2_raster(), colors = get_colors("no2"))
 
     sliderProxy("no2_map", this.no2.name, no2.pal, raster = no2_raster(), units = "(ppb)", EPApoints = no2_points())
     }
@@ -2631,7 +2647,7 @@ server <- function(input, output) {
 
     in.pal <- input$o3_rad
 
-    o3.pal <- palFromLayer(this.o3.name, style = in.pal, raster = o3_raster())
+    o3.pal <- palFromLayer(this.o3.name, style = in.pal, raster = o3_raster(), colors = get_colors("o3"))
 
     sliderProxy("o3_map", this.o3.name, o3.pal, raster = o3_raster(), units = "(ppm)", EPApoints = o3_points())
     }
@@ -2737,7 +2753,7 @@ server <- function(input, output) {
 
       in.pal <- input$so2_rad
 
-      so2.pal <- palFromLayer(this.so2.name, style = in.pal, raster = so2_raster())
+      so2.pal <- palFromLayer(this.so2.name, style = in.pal, raster = so2_raster(), colors = get_colors("so2"))
 
       sliderProxy("so2_map", this.so2.name, so2.pal, raster = so2_raster(), units = "(ppb)",EPApoints = so2_points())
     }
@@ -2846,7 +2862,7 @@ server <- function(input, output) {
 
       in.pal <- input$pb_rad
 
-      pb.pal <- palFromLayer(this.pb.name, style = in.pal, raster = pb_raster())
+      pb.pal <- palFromLayer(this.pb.name, style = in.pal, raster = pb_raster(), colors = get_colors("pb"))
 
       sliderProxy("pb_map", this.pb.name, pb.pal, raster = pb_raster(), units = "(ug/m3)", EPApoints = pb_points())
 
@@ -2904,7 +2920,7 @@ server <- function(input, output) {
 
   output$pe_map <- renderLeaflet({
 
-    pe.pal <- palFromLayer("PECount", colors = c("darkgreen", "yellow2", "darkorange", "darkred"), raster = master.raster)
+    pe.pal <- palFromLayer("PECount",  raster = master.raster)
     
     pe.map <- leaflet("PECount") %>%
       setView(lng = -87.660456,
@@ -2920,14 +2936,14 @@ server <- function(input, output) {
                   layerId = chi.map$area_numbe,
                   weight = 1,
                   fillOpacity = 0.01) %>%
-      addRasterImage(master.raster[["PECount"]], opacity = 0.4, colors = pe.pal) %>%
-      leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources") %>%
+      addRasterImage(master.raster[["PECount"]], opacity = 0.95, colors = pe.pal) %>%
+      addLegendDecreasing(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources", decreasing = TRUE) %>%
       addCircleMarkers(data = cdph.permits,
                        color = "black",
-                       radius = 0.75,
+                       radius = 1.5,
                        stroke = T,
-                       opacity = 1,
-                       weight = 0.75,
+                       opacity = .8,
+                       weight = 1,
                        label = cdph.permits$APPLICAT_1,
                        popup = paste(paste("Applicant:", cdph.permits$APPLICAT_1, sep = " "),
                                      paste("Address:", cdph.permits$ADDRE, sep = " "),
@@ -2960,7 +2976,7 @@ server <- function(input, output) {
     if(input$sidebar == "pe") {
       
       
-      pe.pal <- palFromLayer("PECount", colors = c("darkgreen", "yellow2", "darkorange", "darkred"), raster = master.raster)
+      pe.pal <- palFromLayer("PECount", raster = master.raster, colors= get_colors("pe"))
       
       
       if(input$pe_chi_zoom == "chi") {
@@ -2980,14 +2996,14 @@ server <- function(input, output) {
                     layerId = chi.map$area_numbe,
                     weight = 1,
                     fillOpacity = 0.01) %>%
-        addRasterImage(master.raster[["PECount"]], opacity = 0.4, colors = pe.pal) %>%
-        leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "Point Emission Sources") %>%
+        addRasterImage(master.raster[["PECount"]], opacity = 0.95, colors = pe.pal) %>%
+        addLegendDecreasing(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "Point Emission Sources", decreasing = TRUE) %>%
         addCircleMarkers(data = cdph.permits,
                          color = "black",
-                         radius = 0.75,
+                         radius = 1.5,
                          stroke = T,
                          opacity = 1,
-                         weight = 0.75,
+                         weight = 1,
                          label = cdph.permits$APPLICAT_1,
                          popup = paste(paste("Applicant:", cdph.permits$APPLICAT_1, sep = " "),
                                        paste("Address:", cdph.permits$ADDRE, sep = " "),
@@ -3005,12 +3021,12 @@ server <- function(input, output) {
           clearShapes() %>%
           clearMarkers() 
         
-        pe.pal <- palFromLayer("PECount", colors = c("darkgreen", "yellow2", "darkorange", "darkred"), raster = master.raster)
+        pe.pal <- palFromLayer("PECount", colors= get_colors("pe"), raster = master.raster)
         
         pe.proxy %>%
           flyTo(lat = "41.97736", lng = "-87.62255", zoom = 7) %>% 
-          addRasterImage(master.raster[["PECount"]], opacity = 0.7, colors = pe.pal) %>%
-          leaflet::addLegend(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources") %>%
+          addRasterImage(master.raster[["PECount"]], opacity = .95, colors = pe.pal) %>%
+          addLegendDecreasing(pal = pe.pal, values = values(master.raster[["PECount"]]), title = "NEI Point Emission Sources", decreasing = TRUE) %>%
           addPolygons(data = large.area, 
                       color = "darkslategray",
                       fillOpacity  = 0.01, 
@@ -3125,7 +3141,7 @@ server <- function(input, output) {
 
       in.pal <- input$temp_rad
 
-      temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = temp_raster())
+      temp.pal <- palFromLayer(this.temp.name, style = in.pal, raster = temp_raster(), colors = get_colors("temp"))
 
       sliderProxy("temp_map", this.temp.name, temp.pal, raster = temp_raster(), units = "(\u00B0F)", EPApoints = temp_points())
     }
@@ -3201,7 +3217,7 @@ server <- function(input, output) {
     
     in.pal <- "mon"
     
-    pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = master.raster)
+    pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = master.raster, color = get_colors("pressure"))
     
     dashMap(this.pressure.name, pressure.pal, raster = master.raster, 
             area = large.area, layerId = large.area$FIPS,
@@ -3225,7 +3241,7 @@ server <- function(input, output) {
       
       in.pal <- input$pressure_rad
       
-      pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = pressure_raster())
+      pressure.pal <- palFromLayer(this.pressure.name, style = in.pal, raster = pressure_raster(), colors = get_colors("pressure"))
       
       sliderProxy("pressure_map", this.pressure.name, pressure.pal, raster = pressure_raster(), units = "(mbar)", EPApoints = pressure_points())
     }
@@ -3326,7 +3342,7 @@ server <- function(input, output) {
       
       in.pal <- input$precip_rad
       
-      precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = precip_raster())
+      precip.pal <- palFromLayer(this.precip.name, style = in.pal, raster = precip_raster(), colors = get_colors("precip"))
       
       sliderProxy("precip_map", this.precip.name, precip.pal, raster = precip_raster(), units = "(inches)", EPApoints = precip_points())
     }
