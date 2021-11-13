@@ -28,8 +28,9 @@ RUN install2.r --error \
     tidyr \ 
     stringr \
     purrr \
-    viridis \
     prompter
+    
+RUN Rscript -e 'install.packages("viridis")'
     
 WORKDIR /home/shinyusr
 COPY ./ .
