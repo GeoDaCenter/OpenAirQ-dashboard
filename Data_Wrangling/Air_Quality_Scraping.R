@@ -19,18 +19,20 @@ api_key <- Sys.getenv("api_key")
 
 # identify time difference between utc and chicago time
 current_time_ct <- Sys.time()
-current_time_utc <- ymd_hms(current_time_ct, tz = "UTC")
-diff <- difftime(current_time_ct, current_time_utc, units="hours") %>% 
+current_time_utc <- ymd_hms(with_tz(current_time_ct, tz = "UTC"), 
+                            tz = "America/Chicago")
+diff <- difftime(current_time_utc, current_time_ct, units="hours") %>% 
   as.numeric() %>% 
   round(., 1)
 
-# the AirNow API uses UTC time: UTC 6 am = CDT 12 am
+# the AirNow API uses UTC time, so we need to adjust for the difference
+# at different season
 make_query_url <- function(last_day, today, key, diff){
   # build query for data downloading
   base <- 'https://www.airnowapi.org/aq/data/?'
   
   start_hour <- paste0("T0", diff)
-  end_hour <- paste0("T0", diff - 1)
+  end_hour <- paste0("T0", as.numeric(diff - 1))
   
   start <- paste0("startDate=", last_day, start_hour)
   end <- paste0("&endDate=", today, end_hour)
@@ -51,11 +53,14 @@ data_url <- make_query_url(last_day, up_to_day, api_key, diff)
 # ------ process newly acquired data
 new_dt <- fromJSON(url(data_url))
 
-aggregate_day <- function(data){
+aggregate_day <- function(data, diff){
   # process data by date
+  # identify the last hour of the day
+  end_hour <- diff - 1
+  hour_pattern <- paste0("T0[0-", end_hour, "]") 
   data <- data %>% 
     rename(`Site ID` = FullAQSCode) %>%
-    mutate(is_last_day = str_detect(UTC, pattern = 'T0[0-4]'),
+    mutate(is_last_day = str_detect(UTC, pattern = hour_pattern),
            date = as.Date(UTC),
            date = if_else(is_last_day, date - 1 , date)) %>% 
     filter(date >= "2021-03-11")
@@ -70,7 +75,7 @@ aggregate_day <- function(data){
   return(data_agg)
 } 
 
-dt_agg <- aggregate_day(new_dt)
+dt_agg <- aggregate_day(new_dt, diff)
 
 # ----- reshape to wide 
 pm_wide <- dt_agg %>% 

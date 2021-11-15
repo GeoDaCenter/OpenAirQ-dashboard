@@ -10,8 +10,10 @@ name: Automatic Air Quality Data Scraping
 
 on:
   schedule:
-  # Runs on UCT time 12:00 pm = Central Time 7:00 am everyday
+  # Runs on UCT time 12:00 pm = Central Time 6:00 am everyday
     - cron: '0 12 * * *'
+  push:
+    branches: [ main, master ]
 
 jobs:
   build:
