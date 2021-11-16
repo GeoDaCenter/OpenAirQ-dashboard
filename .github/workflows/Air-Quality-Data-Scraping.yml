@@ -12,6 +12,8 @@ on:
   schedule:
   # Runs on UCT time 12:00 pm = Central Time 6:00 am everyday in standard time
     - cron: '0 12 * * *'
+  push:
+    branches: [ main, master ]
 
 jobs:
   build:

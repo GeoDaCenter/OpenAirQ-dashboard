@@ -15,7 +15,7 @@ auth_email = Sys.getenv("BQ_user")
 bq_auth(email = auth_email,
         path = json_string)
 # project set up
-project <- "openairq-dashboard" # replace this with your project ID 
+project <- "open-airq-bigquery" # replace this with your project ID 
 sql_aqi <- "SELECT * FROM Scraped_Data.AQI"
 sql_pm25 <- "SELECT * FROM Scraped_Data.PM25"
 options(
@@ -36,10 +36,8 @@ aqi_old <- bq_project_query(project, sql_aqi) %>%
 most_recent_date <- str_extract(names(aqi_old), "[0-9]{3,}") %>% 
   na.omit() %>% first() %>% ymd()
 last_day = most_recent_date + 1
-up_to_day <- Sys.Date() %>% 
-              with_tz(tz = "America/Chicago") %>% 
-              date() %>% 
-              as.character()
+up_to_day <- as.character(Sys.Date())
+              
 api_key <- Sys.getenv("api_key")
 
 # identify time difference between utc and chicago time

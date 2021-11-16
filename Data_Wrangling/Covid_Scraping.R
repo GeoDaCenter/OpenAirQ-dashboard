@@ -54,7 +54,7 @@ auth_email = Sys.getenv("BQ_user")
 bq_auth(email = auth_email,
         path = json_string)
 
-project <- "openairq-dashboard"
+project <- "open-airq-bigquery"
 options(
   gargle_oauth_email = auth_email
 )
