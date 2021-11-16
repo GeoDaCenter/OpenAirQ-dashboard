@@ -23,15 +23,18 @@ RUN install2.r --error \
     covr \
     rex \
     jsonlite \
-    geojsonio \ 
-    dplyr \ 
-    tidyr \ 
+    geojsonio \
+    dplyr \
+    tidyr \
     stringr \
     purrr \
-    prompter
-    
+    prompter \
+    bigrquery \
+    gargle \
+    readr
+
 RUN Rscript -e 'install.packages("viridis")'
-    
+
 WORKDIR /home/shinyusr
 COPY ./ .
 CMD Rscript deploy.R

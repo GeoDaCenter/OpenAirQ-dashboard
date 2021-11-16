@@ -2,7 +2,10 @@ library(tidyr)
 library(dplyr)
 library(RSocrata)
 library(geojsonio)
-
+library(bigrquery)
+library(gargle)
+library(readr)
+library(jsonlite)
 # This scripts scrape up-to-date Covid Data
 
 ### Scrape COVID data from Chicago data Portal
@@ -45,8 +48,31 @@ write.csv(covid_means, file = "Data/COVID/covid_means.csv",
 
 # update the data tables stored in Google Cloud
 
-# update the geojson file
+## setup bigquery
+json_string = Sys.getenv("BQ_key")
+auth_email = Sys.getenv("BQ_user")
+bq_auth(email = auth_email,
+        path = json_string)
 
+project <- "openairq-dashboard"
+options(
+  gargle_oauth_email = auth_email
+)
+
+## upload to bigquery
+upload_bq_table <- function(table_name, df){
+  # this function handles table overwriting in BQ
+  bq_tb <- bq_table(project, dataset = "Scraped_Data", 
+                    table = table_name)
+  bq_table_delete(bq_tb)
+  bq_tb <- bq_table_create(bq_tb, df)
+  bq_table_upload(bq_tb, df)
+}
+
+upload_bq_table("CovidWeekly", covid)
+upload_bq_table("Covid_means", covid_means)
+
+# update the geojson file
 covid_geo <- geojson_read("Data/COVID/historical/covid.geojson",
                           what = "sp")
 

@@ -10,7 +10,7 @@ name: Automatic Air Quality Data Scraping
 
 on:
   schedule:
-  # Runs on UCT time 12:00 pm = Central Time 6:00 am everyday
+  # Runs on UCT time 12:00 pm = Central Time 6:00 am everyday in standard time
     - cron: '0 12 * * *'
 
 jobs:
@@ -30,11 +30,14 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v1
         with:
           cache-version: 1
-          extra-packages: tidyr, dplyr, jsonlite, stringr, lubridate
+          extra-packages: tidyr, dplyr, jsonlite, stringr, lubridate, bigrquery,
+                          gargle, readr
           needs: website, coverage
       - name: Scraping Air Quality Data
         env:
           api_key: ${{ secrets.AIRNOW_API_KEY }}
+          BQ_key: ${{ secrets.BQ_KEY }}
+          BQ_user: ${{ secrets.BQ_USER }}
         run: Rscript Data_Wrangling/Air_Quality_Scraping.R
       - name: Commit files
         run: |

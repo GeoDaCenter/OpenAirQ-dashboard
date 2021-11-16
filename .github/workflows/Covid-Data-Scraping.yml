@@ -10,8 +10,8 @@ name: Automatic Covid Data Scraping
 
 on:
   schedule:
-  # Runs every Monday on UCT time 13:00 pm = Central Time 7:00 am
-    - cron: '0 13 * * 1'
+    # Runs every Monday on UCT time 12:00 pm = Central Time 6:00 am （standard time)
+    - cron: '0 12 * * 1'
 
 jobs:
   build:
@@ -30,9 +30,13 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v1
         with:
           cache-version: 1
-          extra-packages: tidyr, dplyr, RSocrata, geojsonio
+          extra-packages: tidyr, dplyr, RSocrata, geojsonio, bigrquery,
+                          gargle, readr, jsonlite
           needs: website, coverage
       - name: Scraping Covid Data
+        env:
+          BQ_key: ${{ secrets.BQ_KEY }}
+          BQ_user: ${{ secrets.BQ_USER }}
         run: Rscript Data_Wrangling/Covid_Scraping.R
       - name: Commit files
         run: |

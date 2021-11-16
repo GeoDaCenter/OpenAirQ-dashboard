@@ -3,18 +3,43 @@ library(tidyr)
 library(jsonlite)
 library(stringr)
 library(lubridate)
+library(bigrquery)
+library(gargle)
+library(readr)
+
+# BigQuery setup
 
 path_to_data <- "Data/PM25_Weekly/"
-
+json_string = Sys.getenv("BQ_key")
+auth_email = Sys.getenv("BQ_user")
+bq_auth(email = auth_email,
+        path = json_string)
+# project set up
+project <- "openairq-dashboard" # replace this with your project ID 
+sql_aqi <- "SELECT * FROM Scraped_Data.AQI"
+sql_pm25 <- "SELECT * FROM Scraped_Data.PM25"
+options(
+  gargle_oauth_email = auth_email
+)
 # read in existing data
-pm25_old <- read.csv(paste0(path_to_data, "pm25.csv"))
-aqi_old <- read.csv(paste0(path_to_data, "aqi.csv"))
+pm25_old <- bq_project_query(project, sql_pm25) %>% 
+  bq_table_download() %>% 
+  mutate(across(contains("PM25"), as.numeric)) %>% 
+  select(Site_ID, COUNTY, latitude, longitude, name, everything())
+
+aqi_old <- bq_project_query(project, sql_aqi) %>% 
+  bq_table_download() %>% 
+  mutate(across(contains("AQI"), as.numeric)) %>% 
+  select(Site_ID, COUNTY, latitude, longitude, name, everything()) 
 
 # identify the most recent day for which data is available
 most_recent_date <- str_extract(names(aqi_old), "[0-9]{3,}") %>% 
   na.omit() %>% first() %>% ymd()
 last_day = most_recent_date + 1
-up_to_day <- as.character(Sys.Date())
+up_to_day <- Sys.Date() %>% 
+              with_tz(tz = "America/Chicago") %>% 
+              date() %>% 
+              as.character()
 api_key <- Sys.getenv("api_key")
 
 # identify time difference between utc and chicago time
@@ -73,7 +98,7 @@ aggregate_day <- function(data, diff){
     mutate(date = str_remove_all(date, "-")) %>% 
     arrange(desc(date))
   return(data_agg)
-} 
+}
 
 dt_agg <- aggregate_day(new_dt, diff)
 
@@ -96,23 +121,35 @@ aqi_wide <- dt_agg %>%
 
 pm_combo <- pm_wide %>% 
   mutate(`Site ID` = as.numeric(`Site ID`)) %>% 
-  rename(Site.ID = `Site ID`) %>% 
-  right_join(., pm25_old, by ='Site.ID') %>% 
+  rename(Site_ID = `Site ID`) %>% 
+  right_join(., pm25_old, by ='Site_ID') %>% 
   relocate(c("COUNTY", "latitude", "longitude", "name"), 
-           .after = 'Site.ID')
+           .after = 'Site_ID') 
 
-write.csv(pm_combo, file = paste0(path_to_data, "pm25.csv"), 
+write.csv(pm_combo, file = paste0(path_to_data, "pm25.csv"),
           row.names = F)
 
 aqi_combo <- aqi_wide %>% 
   mutate(`Site ID` = as.numeric(`Site ID`)) %>% 
-  rename(Site.ID = `Site ID`) %>% 
-  right_join(., aqi_old, by ='Site.ID') %>% 
+  rename(Site_ID = `Site ID`) %>% 
+  right_join(., aqi_old, by ='Site_ID') %>% 
   relocate(c("COUNTY", "latitude", "longitude", "name"), 
-           .after = 'Site.ID')
+           .after = 'Site_ID')
 
-write.csv(aqi_combo, file = paste0(path_to_data, "aqi.csv"), 
+write.csv(aqi_combo, file = paste0(path_to_data, "aqi.csv"),
           row.names = F)
+
+upload_bq_table <- function(table_name, df){
+  # this function handles table overwriting in BQ
+  bq_tb <- bq_table(project, dataset = "Scraped_Data", 
+                    table = table_name)
+  bq_table_delete(bq_tb)
+  bq_tb <- bq_table_create(bq_tb, df)
+  bq_table_upload(bq_tb, df)
+}
+
+upload_bq_table("AQI", aqi_combo)
+upload_bq_table("PM25", pm_combo)
 
 # aggregate to weekly data
 
@@ -121,7 +158,7 @@ aggregate_weekly <- function(df, var){
   var_weekly_means <- df %>% 
     select(everything(), 
            -c("COUNTY", "latitude", "longitude", "name")) %>%
-    pivot_longer(col = -Site.ID, names_to = 'date', 
+    pivot_longer(col = -Site_ID, names_to = 'date', 
                  values_to = "value") %>%
     mutate(date = str_extract(date, "[0-9]{3,}"),
            date = ymd(date),
@@ -144,10 +181,13 @@ aqi_weekly <- aggregate_weekly(aqi_combo, AQI) %>%
 pm_weekly <- aggregate_weekly(pm_combo, PM25) %>% 
   rename(PM25 = var)
 
-write.csv(aqi_weekly, file = paste0(path_to_data, "aqi_means.csv"), 
+upload_bq_table("AQI_means", aqi_weekly)
+upload_bq_table("PM25_means", pm_weekly)
+
+write.csv(aqi_weekly, file = paste0(path_to_data, "aqi_means.csv"),
           row.names = F)
 
-write.csv(pm_weekly, file = paste0(path_to_data, "pm25_means.csv"), 
+write.csv(pm_weekly, file = paste0(path_to_data, "pm25_means.csv"),
           row.names = F)
 
 
