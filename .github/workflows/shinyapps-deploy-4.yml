@@ -21,12 +21,13 @@ jobs:
       run: docker build -t main .
     # run the docker image supply the secrets from the github secrets store.
     - name: execute
+      env:
+        BQ_key: ${{ secrets.BQ_KEY }}
+        BQ_user: ${{ secrets.BQ_USER }}
       run: >
         docker run
         -e SHINY_ACC_NAME=${{secrets.SHINY_ACC_NAME}}
         -e TOKEN=${{secrets.TOKEN}}
         -e SECRET=${{secrets.SECRET}}
         -e MASTERNAME=${{secrets.MASTERNAME}}
-        -e BQ_key=${{secrets.BQ_KEY}}
-        -e BQ_user=${{secrets.BQ_USER}}
         main
