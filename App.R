@@ -18,6 +18,9 @@ library(zoo)
 library(ggthemes)
 library(viridis)
 library(prompter)
+library(bigrquery)
+library(gargle)
+library(readr)
 
 # FUNCTIONS FOR APP USE
 source("DashFunctions.R")
@@ -54,14 +57,51 @@ chi.boundary<- st_union(chi.admin.map)
 descriptions <- read.csv("Data/Description.csv", stringsAsFactors = F)
 
 #### HEALTH EXPLORER DATA
-pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
-pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
+#### BigQuery Setup
+json_string = Sys.getenv("BQ_key")
+auth_email = Sys.getenv("BQ_user")
+bq_auth(email = auth_email,
+        path = json_string)
+# project set up
+project <- "open-airq-bigquery" # replace this with your project ID 
+sql_aqi <- "SELECT * FROM Scraped_Data.AQI"
+sql_pm25 <- "SELECT * FROM Scraped_Data.PM25"
+sql_pm25_means <- "SELECT * FROM Scraped_Data.PM25_means"
+sql_covid_raw <- "SELECT * FROM Scraped_Data.CovidWeekly"
+sql_covid_means <- "SELECT * FROM Scraped_Data.Covid_means"
+options(
+  gargle_oauth_email = auth_email
+)
+# read in existing data
+pm25 <- bq_project_query(project, sql_pm25) %>% 
+  bq_table_download() %>% 
+  #mutate(across(contains("PM25"), as.numeric)) %>% 
+  #select(Site_ID, COUNTY, latitude, longitude, name, everything()) %>% 
+  rename(Site.ID = Site_ID)
+
+pm25.means <- bq_project_query(project, sql_pm25_means) %>% 
+  bq_table_download() 
+
+aqi <- bq_project_query(project, sql_aqi) %>% 
+  bq_table_download() %>% 
+  #mutate(across(contains("AQI"), as.numeric)) %>% 
+  #select(Site_ID, COUNTY, latitude, longitude, name, everything()) %>% 
+  rename(Site.ID = Site_ID)
+
+covid.raw <- bq_project_query(project, sql_covid_raw) %>% 
+  bq_table_download() %>% 
+  mutate(across(contains("COVID"), as.numeric))
+
+covid.means <- bq_project_query(project, sql_covid_means) %>% 
+  bq_table_download() 
+# pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
+# pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
 week.idx<- read.csv("Data/Week_Index.csv")$x
 pm25.trace<- read.csv("Data/PM25_Weekly/pm25_trace.csv")$x
-aqi<- read.csv("Data/PM25_Weekly/aqi.csv")
+#aqi<- read.csv("Data/PM25_Weekly/aqi.csv")
 aqi.trace<- rev(read.csv("Data/PM25_Weekly/aqi_means.csv")[, -1])
-covid.raw<- read.csv("Data/COVID/CovidWeekly.csv")
-covid.means<- read.csv("Data/COVID/covid_means.csv", row.names=1)
+#covid.raw<- read.csv("Data/COVID/CovidWeekly.csv")
+#covid.means<- read.csv("Data/COVID/covid_means.csv", row.names=1)
 covid.trace<- rev(covid.means[, -1])
 asthma.raw<- read.csv("Data/COVID/Asthma2017.csv")
 
