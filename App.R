@@ -58,10 +58,11 @@ descriptions <- read.csv("Data/Description.csv", stringsAsFactors = F)
 
 #### HEALTH EXPLORER DATA
 #### BigQuery Setup
+
 json_string = Sys.getenv("BQ_key")
 auth_email = Sys.getenv("BQ_user")
 bq_auth(email = auth_email,
-        path = json_string)
+       path = json_string)
 # project set up
 project <- "open-airq-bigquery" # replace this with your project ID 
 sql_aqi <- "SELECT * FROM Scraped_Data.AQI"
@@ -75,8 +76,9 @@ options(
 # read in existing data
 pm25 <- bq_project_query(project, sql_pm25) %>% 
   bq_table_download() %>% 
-  #mutate(across(contains("PM25"), as.numeric)) %>% 
-  #select(Site_ID, COUNTY, latitude, longitude, name, everything()) %>% 
+  mutate(across(contains("PM25"), as.numeric)) %>% 
+  dplyr::select(Site_ID, COUNTY, latitude, longitude, 
+                name, everything()) %>% 
   rename(Site.ID = Site_ID)
 
 pm25.means <- bq_project_query(project, sql_pm25_means) %>% 
@@ -84,8 +86,9 @@ pm25.means <- bq_project_query(project, sql_pm25_means) %>%
 
 aqi <- bq_project_query(project, sql_aqi) %>% 
   bq_table_download() %>% 
-  #mutate(across(contains("AQI"), as.numeric)) %>% 
-  #select(Site_ID, COUNTY, latitude, longitude, name, everything()) %>% 
+  mutate(across(contains("AQI"), as.numeric)) %>% 
+  dplyr::select(Site_ID, COUNTY, latitude, longitude,
+                name, everything()) %>%
   rename(Site.ID = Site_ID)
 
 covid.raw <- bq_project_query(project, sql_covid_raw) %>% 
@@ -93,8 +96,10 @@ covid.raw <- bq_project_query(project, sql_covid_raw) %>%
   mutate(across(contains("COVID"), as.numeric))
 
 covid.means <- bq_project_query(project, sql_covid_means) %>% 
-  bq_table_download() 
-# pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
+  bq_table_download() %>%  
+  column_to_rownames(var="time")
+  
+#pm25<- read.csv("Data/PM25_Weekly/pm25.csv")
 # pm25.means<- read.csv("Data/PM25_Weekly/pm25_means.csv")
 week.idx<- read.csv("Data/Week_Index.csv")$x
 pm25.trace<- read.csv("Data/PM25_Weekly/pm25_trace.csv")$x
