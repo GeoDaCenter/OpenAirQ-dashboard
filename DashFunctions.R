@@ -772,7 +772,7 @@ time_plot <- function(in.date, varname, res, points, ylab){
 #' @returns a color scheme
 get_colors <- function(varName){
   if (varName == "pm25"){
-    return(rocket(100, alpha = 0.8, direction = -1))
+    return(inferno(100, alpha = 0.8, direction = -1))
   }
   else if(varName =="pm10"){
     return(inferno(100, alpha = 0.8, direction = -1))
@@ -781,13 +781,13 @@ get_colors <- function(varName){
     return(cividis(100, alpha = 0.8, direction = -1))
   }
   else if(varName =="no2"){
-    return(mako(100, alpha = 0.8, direction = -1))
+    return(cividis(100, alpha = 0.8, direction = -1))
   }
   else if(varName =="o3"){
     return(magma(100, alpha = 0.8, direction = -1))
   }
   else if(varName =="so2"){
-    return(inferno(100, alpha = 0.8, direction = -1))
+    return(magma(100, alpha = 0.8, direction = -1))
   }
   else if(varName =="pb"){
     return(cividis(100, alpha = 0.8, begin = 0.5, direction = -1))
@@ -796,16 +796,16 @@ get_colors <- function(varName){
     return(inferno(100, alpha = 1, begin = 0.5, end = 1, direction = -1))
   }
   else if(varName == "temp"){
-    return(turbo(100, alpha = 0.8))
+    return(viridis(100, alpha = 0.8))
   }
   else if(varName == "pressure"){
-    return(cividis(100, begin = 0, end  = 0.5, alpha = 0.8))
+    return(cividis(100, begin = 0, alpha = 0.8))
   }
   else if(varName == "precip"){
-    return(turbo(100, alpha = 0.8))
+    return(viridis(100, alpha = 0.8))
   }
   else if(varName == "elevation"){
-    return(mako(100, alpha = 0.8, end = 0.5))
+    return(viridis(100, alpha = 0.8))
   }
   
 }
